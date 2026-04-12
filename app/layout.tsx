@@ -7,9 +7,17 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
+  title: 'VisionaryFit - AI Personal Trainer',
+  description: 'Your personalized AI-powered fitness coach. Get custom workout plans, diet recommendations, and track your progress.',
   generator: 'v0.app',
+  manifest: '/manifest.json',
+  themeColor: '#0f0f14',
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+  },
   icons: {
     icon: [
       {
