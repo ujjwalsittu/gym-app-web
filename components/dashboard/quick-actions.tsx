@@ -31,7 +31,7 @@ export function QuickActions({ hasActiveSession, todayPlan }: QuickActionsProps)
         </Button>
       </Link>
 
-      <Link href="/verify" className="block">
+      <Link href="/workout/verify" className="block">
         <Button 
           variant="secondary" 
           size="lg" 

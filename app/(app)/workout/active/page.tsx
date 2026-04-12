@@ -11,6 +11,7 @@ import {
   Pause, Play, RotateCcw, X, Timer
 } from 'lucide-react'
 import { Spinner } from '@/components/ui/spinner'
+import { ExerciseAnimation } from '@/components/workout/exercise-animation'
 import useSWR from 'swr'
 
 const fetcher = (url: string) => fetch(url).then(res => res.json())
@@ -240,6 +241,16 @@ export default function ActiveWorkoutPage() {
 
       {/* Main Content */}
       <main className="mx-auto max-w-lg p-4 space-y-6">
+        {/* Exercise Animation */}
+        <div className="flex justify-center py-4">
+          <ExerciseAnimation 
+            exerciseName={currentExercise.name}
+            autoplay={!isResting}
+            showControls={true}
+            size="md"
+          />
+        </div>
+
         {/* Exercise Info */}
         <div className="text-center space-y-2">
           <p className="text-sm text-muted-foreground">
