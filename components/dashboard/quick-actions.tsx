@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Play, Dumbbell, Video, Calendar, Trophy, BookOpen } from 'lucide-react'
+import { Play, Dumbbell, Video, Calendar, Trophy, BookOpen, Timer, Ruler, FileText, Flame, LayoutTemplate, WifiOff } from 'lucide-react'
 
 interface QuickActionsProps {
   hasActiveSession: boolean
@@ -73,6 +73,72 @@ export function QuickActions({ hasActiveSession, todayPlan }: QuickActionsProps)
         >
           <BookOpen className="h-5 w-5" />
           <span className="text-xs">Exercises</span>
+        </Button>
+      </Link>
+
+      <Link href="/timer" className="block">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="h-auto w-full flex-col gap-1 py-3"
+        >
+          <Timer className="h-5 w-5" />
+          <span className="text-xs">Timer</span>
+        </Button>
+      </Link>
+
+      <Link href="/measurements" className="block">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="h-auto w-full flex-col gap-1 py-3"
+        >
+          <Ruler className="h-5 w-5" />
+          <span className="text-xs">Measure</span>
+        </Button>
+      </Link>
+
+      <Link href="/journal" className="block">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="h-auto w-full flex-col gap-1 py-3"
+        >
+          <FileText className="h-5 w-5" />
+          <span className="text-xs">Journal</span>
+        </Button>
+      </Link>
+
+      <Link href="/routines" className="block">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="h-auto w-full flex-col gap-1 py-3"
+        >
+          <Flame className="h-5 w-5" />
+          <span className="text-xs">Routines</span>
+        </Button>
+      </Link>
+
+      <Link href="/templates" className="block">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="h-auto w-full flex-col gap-1 py-3"
+        >
+          <LayoutTemplate className="h-5 w-5" />
+          <span className="text-xs">Templates</span>
+        </Button>
+      </Link>
+
+      <Link href="/offline" className="block">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="h-auto w-full flex-col gap-1 py-3"
+        >
+          <WifiOff className="h-5 w-5" />
+          <span className="text-xs">Offline</span>
         </Button>
       </Link>
 
