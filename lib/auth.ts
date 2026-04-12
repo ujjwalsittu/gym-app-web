@@ -110,6 +110,12 @@ export async function setSessionCookie(sessionToken: string): Promise<void> {
   })
 }
 
+// Get current user (returns user or null, doesn't redirect)
+export async function getCurrentUser(): Promise<User | null> {
+  const sessionData = await getSession()
+  return sessionData?.user || null
+}
+
 // Get current session from cookie
 export async function getSession(): Promise<{ session: Session; user: User } | null> {
   const cookieStore = await cookies()
