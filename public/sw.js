@@ -1,12 +1,25 @@
-// VisionaryFit Service Worker
-const CACHE_NAME = 'visionaryfit-v1'
+// VisionaryFit Service Worker - Enhanced Offline Support
+const CACHE_NAME = 'visionaryfit-v2'
 const OFFLINE_URL = '/offline.html'
+const WORKOUT_CACHE = 'visionaryfit-workouts-v1'
+const API_CACHE = 'visionaryfit-api-v1'
 
-// Assets to cache
+// Static assets to cache immediately
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
-  '/offline.html'
+  '/offline.html',
+  '/dashboard',
+  '/workout/start',
+  '/workout/active'
+]
+
+// API routes to cache for offline access
+const CACHEABLE_API_ROUTES = [
+  '/api/dashboard',
+  '/api/workout',
+  '/api/diet',
+  '/api/workout/history'
 ]
 
 // Install event - cache static assets
@@ -33,15 +46,60 @@ self.addEventListener('activate', (event) => {
   self.clients.claim()
 })
 
-// Fetch event - network first, fallback to cache
+// Fetch event - smart caching strategy
 self.addEventListener('fetch', (event) => {
-  // Skip non-GET requests
-  if (event.request.method !== 'GET') return
+  const url = new URL(event.request.url)
+  
+  // Skip non-GET requests but queue POST for later sync
+  if (event.request.method !== 'GET') {
+    if (event.request.method === 'POST' && url.pathname.includes('/api/workout/exercise')) {
+      // Queue workout logs for background sync
+      event.respondWith(
+        fetch(event.request.clone()).catch(() => {
+          // Store for later sync
+          return new Response(JSON.stringify({ queued: true }), {
+            headers: { 'Content-Type': 'application/json' }
+          })
+        })
+      )
+    }
+    return
+  }
 
+  // API routes - network first, cache fallback
+  if (CACHEABLE_API_ROUTES.some(route => url.pathname.startsWith(route))) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response.ok) {
+            const clone = response.clone()
+            caches.open(API_CACHE).then((cache) => {
+              cache.put(event.request, clone)
+            })
+          }
+          return response
+        })
+        .catch(() => {
+          return caches.match(event.request).then((cached) => {
+            if (cached) {
+              // Add offline indicator header
+              const headers = new Headers(cached.headers)
+              headers.set('X-Offline', 'true')
+              return new Response(cached.body, { headers })
+            }
+            return new Response(JSON.stringify({ offline: true }), {
+              headers: { 'Content-Type': 'application/json' }
+            })
+          })
+        })
+    )
+    return
+  }
+
+  // Static assets and pages - network first with cache fallback
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        // Clone and cache successful responses
         if (response.ok) {
           const clone = response.clone()
           caches.open(CACHE_NAME).then((cache) => {
@@ -51,7 +109,6 @@ self.addEventListener('fetch', (event) => {
         return response
       })
       .catch(() => {
-        // Return cached response or offline page
         return caches.match(event.request).then((cached) => {
           if (cached) return cached
           if (event.request.mode === 'navigate') {
@@ -62,6 +119,21 @@ self.addEventListener('fetch', (event) => {
       })
   )
 })
+
+// Background sync for offline workout logs
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'sync-workout-logs') {
+    event.waitUntil(syncWorkoutLogs())
+  }
+})
+
+async function syncWorkoutLogs() {
+  // This will be handled by the offline-store.ts syncOfflineData function
+  const clients = await self.clients.matchAll()
+  clients.forEach(client => {
+    client.postMessage({ type: 'SYNC_REQUIRED' })
+  })
+}
 
 // Push notification event
 self.addEventListener('push', (event) => {

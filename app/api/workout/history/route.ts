@@ -1,0 +1,85 @@
+import { NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
+import { sql } from '@/lib/db'
+
+export async function GET() {
+  try {
+    const cookieStore = await cookies()
+    const sessionToken = cookieStore.get('session_token')?.value
+    
+    if (!sessionToken) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Get user from session
+    const sessions = await sql`
+      SELECT user_id FROM sessions 
+      WHERE token = ${sessionToken} AND expires_at > NOW()
+    `
+    
+    if (sessions.length === 0) {
+      return NextResponse.json({ error: 'Session expired' }, { status: 401 })
+    }
+
+    const userId = sessions[0].user_id
+
+    // Get workout history with exercise details
+    const workouts = await sql`
+      SELECT 
+        ws.id,
+        ws.day_of_week,
+        ws.started_at,
+        ws.completed_at,
+        ws.duration_minutes,
+        ws.total_volume,
+        ws.calories_burned,
+        ws.notes,
+        ws.gym_verified,
+        COUNT(el.id) as exercise_count,
+        SUM(el.sets_completed) as total_sets
+      FROM workout_sessions ws
+      LEFT JOIN exercise_logs el ON el.session_id = ws.id
+      WHERE ws.user_id = ${userId}
+      GROUP BY ws.id
+      ORDER BY ws.started_at DESC
+      LIMIT 50
+    `
+
+    // Get personal records
+    const prs = await sql`
+      SELECT 
+        pr.*,
+        pr.achieved_at
+      FROM personal_records pr
+      WHERE pr.user_id = ${userId}
+      ORDER BY pr.achieved_at DESC
+    `
+
+    // Get streak info
+    const streaks = await sql`
+      SELECT * FROM user_streaks WHERE user_id = ${userId}
+    `
+
+    // Calculate stats
+    const stats = await sql`
+      SELECT 
+        COUNT(*) as total_workouts,
+        SUM(duration_minutes) as total_minutes,
+        SUM(calories_burned) as total_calories,
+        SUM(total_volume) as total_volume,
+        AVG(duration_minutes) as avg_duration
+      FROM workout_sessions
+      WHERE user_id = ${userId} AND completed_at IS NOT NULL
+    `
+
+    return NextResponse.json({
+      workouts,
+      personalRecords: prs,
+      streak: streaks[0] || { current_streak: 0, longest_streak: 0 },
+      stats: stats[0] || {}
+    })
+  } catch (error) {
+    console.error('History fetch error:', error)
+    return NextResponse.json({ error: 'Failed to fetch history' }, { status: 500 })
+  }
+}
