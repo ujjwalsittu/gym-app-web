@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
-import { EXERCISE_LIBRARY, ExerciseCategory } from '@/lib/exercise-library'
+import { exerciseLibrary, Exercise } from '@/lib/exercise-library'
+
+type ExerciseCategory = Exercise['category']
 
 export async function GET(request: Request) {
   try {
@@ -10,15 +12,14 @@ export async function GET(request: Request) {
     const equipment = searchParams.get('equipment')?.toLowerCase()
     const difficulty = searchParams.get('difficulty')
 
-    let exercises = [...EXERCISE_LIBRARY]
+    let exercises = [...exerciseLibrary]
 
     // Filter by search query
     if (query) {
       exercises = exercises.filter(ex => 
         ex.name.toLowerCase().includes(query) ||
         ex.description.toLowerCase().includes(query) ||
-        ex.primaryMuscles.some(m => m.toLowerCase().includes(query)) ||
-        ex.secondaryMuscles.some(m => m.toLowerCase().includes(query))
+        ex.muscleGroups.some(m => m.toLowerCase().includes(query))
       )
     }
 
@@ -30,8 +31,7 @@ export async function GET(request: Request) {
     // Filter by muscle group
     if (muscleGroup) {
       exercises = exercises.filter(ex => 
-        ex.primaryMuscles.some(m => m.toLowerCase().includes(muscleGroup)) ||
-        ex.secondaryMuscles.some(m => m.toLowerCase().includes(muscleGroup))
+        ex.muscleGroups.some(m => m.toLowerCase().includes(muscleGroup))
       )
     }
 
@@ -54,9 +54,9 @@ export async function GET(request: Request) {
     }
 
     // Get unique values for filters
-    const categories = [...new Set(EXERCISE_LIBRARY.map(ex => ex.category))]
-    const muscleGroups = [...new Set(EXERCISE_LIBRARY.flatMap(ex => [...ex.primaryMuscles, ...ex.secondaryMuscles]))]
-    const equipmentList = [...new Set(EXERCISE_LIBRARY.flatMap(ex => ex.equipment))]
+    const categories = [...new Set(exerciseLibrary.map(ex => ex.category))]
+    const muscleGroups = [...new Set(exerciseLibrary.flatMap(ex => ex.muscleGroups))]
+    const equipmentList = [...new Set(exerciseLibrary.flatMap(ex => ex.equipment))]
     const difficulties = ['beginner', 'intermediate', 'advanced']
 
     return NextResponse.json({

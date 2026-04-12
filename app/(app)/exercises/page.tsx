@@ -38,14 +38,11 @@ const DIFFICULTY_COLORS: Record<string, string> = {
 }
 
 interface Exercise {
-  id: string
   name: string
   category: string
-  description: string
   instructions: string[]
   tips: string[]
-  primaryMuscles: string[]
-  secondaryMuscles: string[]
+  muscleGroups: string[]
   equipment: string[]
   difficulty: string
   caloriesPerMinute: number
@@ -258,14 +255,14 @@ export default function ExercisesPage() {
                       </div>
                       
                       <div className="flex flex-wrap gap-1 mt-1">
-                        {exercise.primaryMuscles.slice(0, 2).map((muscle: string) => (
+                        {exercise.muscleGroups.slice(0, 2).map((muscle: string) => (
                           <span key={muscle} className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">
                             {muscle}
                           </span>
                         ))}
-                        {exercise.primaryMuscles.length > 2 && (
+                        {exercise.muscleGroups.length > 2 && (
                           <span className="text-xs text-muted-foreground">
-                            +{exercise.primaryMuscles.length - 2}
+                            +{exercise.muscleGroups.length - 2}
                           </span>
                         )}
                       </div>
@@ -322,13 +319,8 @@ export default function ExercisesPage() {
                         Target Muscles
                       </p>
                       <div className="flex flex-wrap gap-1">
-                        {exercise.primaryMuscles.map((muscle: string) => (
+                        {exercise.muscleGroups.map((muscle: string) => (
                           <span key={muscle} className="text-xs bg-primary/20 text-primary px-2 py-1 rounded-full">
-                            {muscle}
-                          </span>
-                        ))}
-                        {exercise.secondaryMuscles.map((muscle: string) => (
-                          <span key={muscle} className="text-xs bg-muted text-muted-foreground px-2 py-1 rounded-full">
                             {muscle}
                           </span>
                         ))}
