@@ -17,48 +17,49 @@ const exerciseAnimations: Record<string, object> = {
 }
 
 // Fallback SVG animations for exercises without Lottie files
+// Each exercise now has context-specific SVG paths that better represent the movement
 const exerciseSVGs: Record<string, { icon: string; color: string }> = {
-  // Upper Body
-  'bench press': { icon: 'M4 12h16M8 8v8M16 8v8', color: 'text-primary' },
-  'push-up': { icon: 'M4 16l4-4 4 4 4-8 4 4', color: 'text-primary' },
-  'push-ups': { icon: 'M4 16l4-4 4 4 4-8 4 4', color: 'text-primary' },
-  'shoulder press': { icon: 'M12 4v8M8 12l4-4 4 4M4 16h16', color: 'text-primary' },
-  'bicep curl': { icon: 'M8 16c0-4 4-8 4-8s4 4 4 8', color: 'text-primary' },
-  'bicep curls': { icon: 'M8 16c0-4 4-8 4-8s4 4 4 8', color: 'text-primary' },
-  'tricep dips': { icon: 'M6 8h12M8 8v8M16 8v8M12 4v4', color: 'text-primary' },
-  'pull-ups': { icon: 'M4 4h16M12 4v12M8 8l4-4 4 4', color: 'text-primary' },
-  'lat pulldown': { icon: 'M4 4h16M12 4v12M6 8l6 4 6-4', color: 'text-primary' },
-  'rows': { icon: 'M4 12h12M16 8v8M8 8l-4 4 4 4', color: 'text-primary' },
-  'dumbbell rows': { icon: 'M4 12h12M16 8v8M8 8l-4 4 4 4', color: 'text-primary' },
+  // Upper Body - Chest/Arms
+  'bench press': { icon: 'M6 10c0-2 2-4 6-4s6 2 6 4M6 10l4 4M18 10l-4 4M6 10v4M18 10v4M10 14h4', color: 'text-primary' },
+  'push-up': { icon: 'M4 14c2-4 4-6 8-6s6 2 8 6M4 14l2-3M20 14l-2-3M12 8v6M8 10l2-2M16 10l-2-2', color: 'text-primary' },
+  'push-ups': { icon: 'M4 14c2-4 4-6 8-6s6 2 8 6M4 14l2-3M20 14l-2-3M12 8v6M8 10l2-2M16 10l-2-2', color: 'text-primary' },
+  'shoulder press': { icon: 'M6 16v-6c0-2 2-4 6-4s6 2 6 4v6M8 10l-2-4M16 10l2-4M12 4v2M6 16h12', color: 'text-primary' },
+  'bicep curl': { icon: 'M6 16v-8c0-3 2-4 4-4M18 16v-8c0-3-2-4-4-4M6 8l-2-2M18 8l2-2M8 12c2-2 2-4 2-4M16 12c-2-2-2-4-2-4', color: 'text-primary' },
+  'bicep curls': { icon: 'M6 16v-8c0-3 2-4 4-4M18 16v-8c0-3-2-4-4-4M6 8l-2-2M18 8l2-2M8 12c2-2 2-4 2-4M16 12c-2-2-2-4-2-4', color: 'text-primary' },
+  'tricep dips': { icon: 'M4 8h16M6 8v8M18 8v8M10 8c0 4-2 8-2 8M14 8c0 4 2 8 2 8M6 16h12', color: 'text-primary' },
+  'pull-ups': { icon: 'M4 6h16M8 6v10c0-4 2-8 4-8s4 4 4 8v-10M8 16h8M10 8l2-4 2 4', color: 'text-primary' },
+  'lat pulldown': { icon: 'M4 6h16M8 6v8M16 6v8M6 10l6-4 6 4M6 14h12', color: 'text-primary' },
+  'rows': { icon: 'M4 12h12M16 8l-4 4-4-4M16 8v8M14 12h2M6 12h2', color: 'text-primary' },
+  'dumbbell rows': { icon: 'M4 12h12M16 8l-4 4-4-4M16 8v8M14 12h2M6 12h2M2 8v8M22 8v8', color: 'text-primary' },
   
-  // Lower Body
-  'squat': { icon: 'M8 4v6M16 4v6M6 10h12M8 10v8M16 10v8M6 18h12', color: 'text-chart-2' },
-  'squats': { icon: 'M8 4v6M16 4v6M6 10h12M8 10v8M16 10v8M6 18h12', color: 'text-chart-2' },
-  'deadlift': { icon: 'M4 18h16M12 18V6M8 10l4-4 4 4', color: 'text-chart-2' },
-  'deadlifts': { icon: 'M4 18h16M12 18V6M8 10l4-4 4 4', color: 'text-chart-2' },
-  'lunges': { icon: 'M8 4v8M16 8v8M12 12l-4 4M12 12l4-4', color: 'text-chart-2' },
-  'leg press': { icon: 'M4 12h8M12 8v8M16 6l4 6-4 6', color: 'text-chart-2' },
-  'calf raises': { icon: 'M8 18v-4M16 18v-4M12 4v10M6 14h12', color: 'text-chart-2' },
-  'leg curls': { icon: 'M4 8h16M12 8v8c-4 0-4 4-4 4', color: 'text-chart-2' },
-  'leg extensions': { icon: 'M4 8h16M12 8v8c4 0 4 4 4 4', color: 'text-chart-2' },
+  // Lower Body - Quads/Glutes
+  'squat': { icon: 'M6 6v6M18 6v6M8 12c-1 3-2 6-2 6M16 12c1 3 2 6 2 6M6 18h12M8 18v2M16 18v2M12 6c0 2-1 4-1 6', color: 'text-chart-2' },
+  'squats': { icon: 'M6 6v6M18 6v6M8 12c-1 3-2 6-2 6M16 12c1 3 2 6 2 6M6 18h12M8 18v2M16 18v2M12 6c0 2-1 4-1 6', color: 'text-chart-2' },
+  'deadlift': { icon: 'M4 18h16M12 18V4M8 6l4-2 4 2M10 12l2 2 2-2M8 18l2 2 2-2', color: 'text-chart-2' },
+  'deadlifts': { icon: 'M4 18h16M12 18V4M8 6l4-2 4 2M10 12l2 2 2-2M8 18l2 2 2-2', color: 'text-chart-2' },
+  'lunges': { icon: 'M8 6v8M16 10v8M6 14l4 4M18 14l-4 4M10 14h4M8 18l2 2 2-2M16 18l-2 2-2-2', color: 'text-chart-2' },
+  'leg press': { icon: 'M4 12h8M12 6v8c2 0 4 2 4 4M20 10l-4 6M16 16l-2 2-2-2M8 18h8', color: 'text-chart-2' },
+  'calf raises': { icon: 'M6 18v-4M18 18v-4M6 14h12M10 10l2-4 2 4M14 10l2-4 2 4M8 18h2M14 18h2', color: 'text-chart-2' },
+  'leg curls': { icon: 'M4 8h16M12 8c-3 0-4 4-4 6M12 8c3 0 4 4 4 6M8 14v4M16 14v4M6 18h12', color: 'text-chart-2' },
+  'leg extensions': { icon: 'M4 8h16M12 8c3 0 4 4 4 6M12 8c-3 0-4 4-4 6M8 14v4M16 14v4M6 18h12', color: 'text-chart-2' },
   
   // Core
-  'plank': { icon: 'M4 12h16M4 12v2M20 12v2', color: 'text-chart-4' },
-  'crunches': { icon: 'M4 16c4-4 8-4 12-4M8 8c2 4 6 4 8 0', color: 'text-chart-4' },
-  'sit-ups': { icon: 'M4 16c4-4 8-4 12-4M8 8c2 4 6 4 8 0', color: 'text-chart-4' },
-  'russian twists': { icon: 'M12 8v8M6 12h12M8 8l8 8M16 8l-8 8', color: 'text-chart-4' },
-  'leg raises': { icon: 'M4 8h16M12 8v4M8 16l4-4 4 4', color: 'text-chart-4' },
-  'mountain climbers': { icon: 'M4 16l4-4 4 2 4-6 4 4', color: 'text-chart-4' },
+  'plank': { icon: 'M4 12h16M4 12v2M20 12v2M6 10l2 4 2-4M14 10l2 4 2-4M8 14h8', color: 'text-chart-4' },
+  'crunches': { icon: 'M4 16c2-2 4-4 8-4s6 2 8 4M8 8c1 2 2 4 4 4s3-2 4-4M6 14l2-2 2 2M16 14l-2-2-2 2', color: 'text-chart-4' },
+  'sit-ups': { icon: 'M4 16c2-2 4-4 8-4s6 2 8 4M12 4v8M8 12l4-4 4 4M6 16h12', color: 'text-chart-4' },
+  'russian twists': { icon: 'M12 8v8M6 12h12M8 10l4-2 4 2M8 14l4 2 4-2M4 10l-2 2 2 2M20 10l2 2-2 2', color: 'text-chart-4' },
+  'leg raises': { icon: 'M4 8h16M12 8l-2 4-2-4M12 8l2 4 2-4M8 12v6M16 12v6M6 18h12', color: 'text-chart-4' },
+  'mountain climbers': { icon: 'M4 16l4-4 4 4 4-8 4 4M12 8v4M8 14l2 2M16 14l-2 2M10 12l2-2 2 2', color: 'text-chart-4' },
   
   // Cardio
-  'jumping jacks': { icon: 'M12 4v6M8 8l-4 4M16 8l4 4M8 14l4 6 4-6', color: 'text-chart-1' },
-  'burpees': { icon: 'M12 2v4M8 6h8M12 6v6M6 12h12M12 12v4M8 16h8', color: 'text-chart-1' },
-  'high knees': { icon: 'M12 4v4M8 8v8M16 8v8M12 12l-4 4M12 12l4 4', color: 'text-chart-1' },
-  'running': { icon: 'M4 16l4-4 4 2 4-4 4 2', color: 'text-chart-1' },
-  'cycling': { icon: 'M6 14a4 4 0 1 0 0-1M18 14a4 4 0 1 0 0-1M6 14h12', color: 'text-chart-1' },
+  'jumping jacks': { icon: 'M12 4v4M6 8l-4 4M18 8l4 4M8 12l-4 6M16 12l4 6M8 18h2M14 18h2M12 8l-2 4 2 4 2-4-2-4', color: 'text-chart-1' },
+  'burpees': { icon: 'M12 2v4M8 6h8M12 6v6M6 12h12M12 12v4M8 16h8M10 4l-2 2 2 2 2-2-2-2', color: 'text-chart-1' },
+  'high knees': { icon: 'M8 8v6M16 8v6M10 8l-2 4 2 4M14 8l2 4-2 4M12 4v2M12 14v2', color: 'text-chart-1' },
+  'running': { icon: 'M4 16l2-4 2 2 2-4 2 2 2-4 2 2 2-4M8 10l-2-2M16 10l2-2M6 16l8-2', color: 'text-chart-1' },
+  'cycling': { icon: 'M6 14a4 4 0 1 0 0-1M18 14a4 4 0 1 0 0-1M6 14h12M8 10l2 2 2-2M14 10l2 2 2-2M10 12v2M14 12v2', color: 'text-chart-1' },
   
   // Default
-  'default': { icon: 'M12 4v16M4 12h16', color: 'text-muted-foreground' }
+  'default': { icon: 'M12 4v16M4 12h16M8 8l4-4 4 4M8 16l4 4 4-4', color: 'text-muted-foreground' }
 }
 
 interface ExerciseAnimationProps {
