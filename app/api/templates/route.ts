@@ -20,37 +20,40 @@ export async function GET(request: Request) {
       templates = await sql`
         SELECT 
           wt.*,
-          u.name as creator_name,
+          p.full_name as creator_name,
           (SELECT COUNT(*) FROM template_ratings WHERE template_id = wt.id) as rating_count,
           (SELECT AVG(rating) FROM template_ratings WHERE template_id = wt.id) as avg_rating
         FROM workout_templates wt
-        LEFT JOIN users u ON wt.created_by = u.id
-        WHERE wt.created_by = ${user.id}
+        LEFT JOIN users u ON wt.user_id = u.id
+        LEFT JOIN user_profiles p ON u.id = p.user_id
+        WHERE wt.user_id = ${user.id}
         ORDER BY wt.created_at DESC
       `
     } else if (filter === 'community') {
       templates = await sql`
         SELECT 
           wt.*,
-          u.name as creator_name,
+          p.full_name as creator_name,
           (SELECT COUNT(*) FROM template_ratings WHERE template_id = wt.id) as rating_count,
           (SELECT AVG(rating) FROM template_ratings WHERE template_id = wt.id) as avg_rating
         FROM workout_templates wt
-        LEFT JOIN users u ON wt.created_by = u.id
-        WHERE wt.is_public = true AND wt.created_by != ${user.id}
-        ORDER BY wt.use_count DESC, wt.created_at DESC
+        LEFT JOIN users u ON wt.user_id = u.id
+        LEFT JOIN user_profiles p ON u.id = p.user_id
+        WHERE wt.is_public = true AND wt.user_id != ${user.id}
+        ORDER BY wt.usage_count DESC, wt.created_at DESC
       `
     } else {
       templates = await sql`
         SELECT 
           wt.*,
-          u.name as creator_name,
+          p.full_name as creator_name,
           (SELECT COUNT(*) FROM template_ratings WHERE template_id = wt.id) as rating_count,
           (SELECT AVG(rating) FROM template_ratings WHERE template_id = wt.id) as avg_rating
         FROM workout_templates wt
-        LEFT JOIN users u ON wt.created_by = u.id
-        WHERE wt.created_by = ${user.id} OR wt.is_public = true
-        ORDER BY wt.use_count DESC, wt.created_at DESC
+        LEFT JOIN users u ON wt.user_id = u.id
+        LEFT JOIN user_profiles p ON u.id = p.user_id
+        WHERE wt.user_id = ${user.id} OR wt.is_public = true
+        ORDER BY wt.usage_count DESC, wt.created_at DESC
       `
     }
 
@@ -99,11 +102,11 @@ export async function POST(request: Request) {
         description, 
         category,
         difficulty,
-        estimated_minutes,
+        estimated_duration,
         exercises, 
         tags,
         is_public, 
-        created_by
+        user_id
       )
       VALUES (
         ${name}, 

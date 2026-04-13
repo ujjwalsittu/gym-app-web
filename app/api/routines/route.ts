@@ -16,14 +16,14 @@ export async function GET(request: Request) {
     if (type) {
       routines = await sql`
         SELECT * FROM routines 
-        WHERE type = ${type} AND (is_default = true OR created_by = ${user.id})
-        ORDER BY is_default DESC, name ASC
+        WHERE routine_type = ${type} AND (is_system = true OR created_by = ${user.id})
+        ORDER BY is_system DESC, name ASC
       `
     } else {
       routines = await sql`
         SELECT * FROM routines 
-        WHERE is_default = true OR created_by = ${user.id}
-        ORDER BY type, is_default DESC, name ASC
+        WHERE is_system = true OR created_by = ${user.id}
+        ORDER BY routine_type, is_system DESC, name ASC
       `
     }
 
@@ -79,7 +79,7 @@ export async function POST(request: Request) {
 
     const [routine] = await sql`
       INSERT INTO routines (
-        name, type, description, duration_minutes, exercises, target_areas, created_by
+        name, routine_type, description, duration_minutes, exercises, target_areas, created_by
       )
       VALUES (
         ${name}, 

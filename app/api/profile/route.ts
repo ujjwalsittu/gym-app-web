@@ -12,7 +12,7 @@ export async function GET() {
     const profile = await sql`
       SELECT 
         up.*,
-        u.name,
+        up.full_name as name,
         u.email
       FROM user_profiles up
       JOIN users u ON up.user_id = u.id
@@ -62,10 +62,10 @@ export async function PATCH(request: NextRequest) {
 
     const updates = await request.json()
 
-    // Update user name if provided
+    // Update user name if provided (stored in user_profiles)
     if (updates.name) {
       await sql`
-        UPDATE users SET name = ${updates.name} WHERE id = ${user.id}
+        UPDATE user_profiles SET full_name = ${updates.name}, updated_at = NOW() WHERE user_id = ${user.id}
       `
     }
 

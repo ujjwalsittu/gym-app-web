@@ -27,7 +27,7 @@ const recipeSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const cookieStore = await cookies()
-    const sessionToken = cookieStore.get('session_token')?.value
+    const sessionToken = cookieStore.get('vfit_session')?.value
     
     if (!sessionToken) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

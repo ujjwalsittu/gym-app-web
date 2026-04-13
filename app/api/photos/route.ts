@@ -5,7 +5,7 @@ import { sql } from '@/lib/db'
 export async function GET() {
   try {
     const cookieStore = await cookies()
-    const sessionToken = cookieStore.get('session_token')?.value
+    const sessionToken = cookieStore.get('vfit_session')?.value
     
     if (!sessionToken) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -27,18 +27,18 @@ export async function GET() {
       SELECT 
         id,
         photo_type,
-        blob_pathname,
-        taken_at,
-        created_at
+        blob_url,
+        uploaded_at,
+        uploaded_at as created_at
       FROM body_photos
       WHERE user_id = ${userId}
-      ORDER BY taken_at DESC, created_at DESC
+      ORDER BY uploaded_at DESC
     `
 
     // Group photos by date for comparison
     const groupedPhotos: Record<string, any[]> = {}
     photos.forEach((photo: any) => {
-      const dateKey = new Date(photo.taken_at || photo.created_at).toISOString().split('T')[0]
+      const dateKey = new Date(photo.uploaded_at || photo.created_at).toISOString().split('T')[0]
       if (!groupedPhotos[dateKey]) {
         groupedPhotos[dateKey] = []
       }

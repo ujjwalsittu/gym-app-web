@@ -6,7 +6,7 @@ import { sql } from '@/lib/db'
 export async function POST(request: NextRequest) {
   try {
     const cookieStore = await cookies()
-    const sessionToken = cookieStore.get('session_token')?.value
+    const sessionToken = cookieStore.get('vfit_session')?.value
     
     if (!sessionToken) {
       return new Response('Unauthorized', { status: 401 })
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
 
     // Get user profile for context
     const profiles = await sql`
-      SELECT up.*, u.name, u.email
+      SELECT up.*, u.email
       FROM user_profiles up
       JOIN users u ON u.id = up.user_id
       WHERE up.user_id = ${userId}
@@ -114,7 +114,7 @@ GUIDELINES:
 export async function GET() {
   try {
     const cookieStore = await cookies()
-    const sessionToken = cookieStore.get('session_token')?.value
+    const sessionToken = cookieStore.get('vfit_session')?.value
     
     if (!sessionToken) {
       return new Response('Unauthorized', { status: 401 })

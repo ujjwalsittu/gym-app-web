@@ -17,12 +17,13 @@ export async function GET(
     const [template] = await sql`
       SELECT 
         wt.*,
-        u.name as creator_name,
+        p.full_name as creator_name,
         (SELECT COUNT(*) FROM template_ratings WHERE template_id = wt.id) as rating_count,
         (SELECT AVG(rating) FROM template_ratings WHERE template_id = wt.id) as avg_rating,
         (SELECT rating FROM template_ratings WHERE template_id = wt.id AND user_id = ${user.id}) as user_rating
       FROM workout_templates wt
-      LEFT JOIN users u ON wt.created_by = u.id
+      LEFT JOIN users u ON wt.user_id = u.id
+      LEFT JOIN user_profiles p ON u.id = p.user_id
       WHERE wt.id = ${id}
     `
 
@@ -84,15 +85,15 @@ export async function POST(
       // Create copy
       const [copy] = await sql`
         INSERT INTO workout_templates (
-          name, description, category, difficulty, estimated_minutes, 
-          exercises, tags, is_public, created_by
+          name, description, category, difficulty, estimated_duration, 
+          exercises, tags, is_public, user_id
         )
         VALUES (
           ${original.name + ' (Copy)'}, 
           ${original.description}, 
           ${original.category},
           ${original.difficulty},
-          ${original.estimated_minutes},
+          ${original.estimated_duration},
           ${JSON.stringify(original.exercises)}, 
           ${original.tags},
           false, 
@@ -126,7 +127,7 @@ export async function DELETE(
     // Only allow deleting own templates
     await sql`
       DELETE FROM workout_templates 
-      WHERE id = ${id} AND created_by = ${user.id}
+      WHERE id = ${id} AND user_id = ${user.id}
     `
 
     return NextResponse.json({ success: true })

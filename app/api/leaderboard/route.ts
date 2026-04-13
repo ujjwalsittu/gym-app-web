@@ -22,13 +22,14 @@ export async function GET(request: Request) {
       leaderboard = await sql`
         SELECT 
           u.id,
-          u.name,
+          p.full_name as name,
           u.email,
           uc.progress as score,
           uc.completed,
           RANK() OVER (ORDER BY uc.progress DESC) as rank
         FROM user_challenges uc
         JOIN users u ON uc.user_id = u.id
+        LEFT JOIN user_profiles p ON u.id = p.user_id
         WHERE uc.challenge_id = ${challengeId}
         ORDER BY uc.progress DESC
         LIMIT 50
@@ -66,11 +67,12 @@ export async function GET(request: Request) {
           leaderboard = await sql`
             SELECT 
               u.id,
-              u.name,
+              p.full_name as name,
               u.email,
               COALESCE(us.current_streak, 0) as score,
               RANK() OVER (ORDER BY COALESCE(us.current_streak, 0) DESC) as rank
             FROM users u
+            LEFT JOIN user_profiles p ON u.id = p.user_id
             LEFT JOIN user_streaks us ON u.id = us.user_id
             ORDER BY score DESC
             LIMIT 50
@@ -81,15 +83,16 @@ export async function GET(request: Request) {
           leaderboard = await sql`
             SELECT 
               u.id,
-              u.name,
+              p.full_name as name,
               u.email,
               COUNT(ws.id) as score,
               RANK() OVER (ORDER BY COUNT(ws.id) DESC) as rank
             FROM users u
+            LEFT JOIN user_profiles p ON u.id = p.user_id
             LEFT JOIN workout_sessions ws ON u.id = ws.user_id 
               AND ws.status = 'completed'
-              AND ws.start_time >= ${startDate.toISOString()}
-            GROUP BY u.id, u.name, u.email
+              AND ws.started_at >= ${startDate.toISOString()}
+            GROUP BY u.id, p.full_name, u.email
             ORDER BY score DESC
             LIMIT 50
           `
@@ -99,15 +102,17 @@ export async function GET(request: Request) {
           leaderboard = await sql`
             SELECT 
               u.id,
-              u.name,
+              p.full_name as name,
               u.email,
-              COALESCE(SUM(ws.calories_burned), 0)::int as score,
-              RANK() OVER (ORDER BY COALESCE(SUM(ws.calories_burned), 0) DESC) as rank
+              COALESCE(SUM(el.actual_weight_kg * el.actual_reps / 10), 0)::int as score,
+              RANK() OVER (ORDER BY COALESCE(SUM(el.actual_weight_kg * el.actual_reps / 10), 0) DESC) as rank
             FROM users u
+            LEFT JOIN user_profiles p ON u.id = p.user_id
             LEFT JOIN workout_sessions ws ON u.id = ws.user_id 
               AND ws.status = 'completed'
-              AND ws.start_time >= ${startDate.toISOString()}
-            GROUP BY u.id, u.name, u.email
+              AND ws.started_at >= ${startDate.toISOString()}
+            LEFT JOIN exercise_logs el ON ws.id = el.session_id
+            GROUP BY u.id, p.full_name, u.email
             ORDER BY score DESC
             LIMIT 50
           `
@@ -117,16 +122,17 @@ export async function GET(request: Request) {
           leaderboard = await sql`
             SELECT 
               u.id,
-              u.name,
+              p.full_name as name,
               u.email,
-              COALESCE(SUM(el.weight * el.reps), 0)::int as score,
-              RANK() OVER (ORDER BY COALESCE(SUM(el.weight * el.reps), 0) DESC) as rank
+              COALESCE(SUM(el.actual_weight_kg * el.actual_reps), 0)::int as score,
+              RANK() OVER (ORDER BY COALESCE(SUM(el.actual_weight_kg * el.actual_reps), 0) DESC) as rank
             FROM users u
+            LEFT JOIN user_profiles p ON u.id = p.user_id
             LEFT JOIN workout_sessions ws ON u.id = ws.user_id 
               AND ws.status = 'completed'
-              AND ws.start_time >= ${startDate.toISOString()}
+              AND ws.started_at >= ${startDate.toISOString()}
             LEFT JOIN exercise_logs el ON ws.id = el.session_id
-            GROUP BY u.id, u.name, u.email
+            GROUP BY u.id, p.full_name, u.email
             ORDER BY score DESC
             LIMIT 50
           `

@@ -9,11 +9,11 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get default presets and user's custom presets
+    // Get system presets and user's custom presets
     const presets = await sql`
       SELECT * FROM timer_presets 
       WHERE user_id IS NULL OR user_id = ${user.id}
-      ORDER BY is_default DESC, name ASC
+      ORDER BY is_system DESC, name ASC
     `
 
     return NextResponse.json({ presets })
@@ -33,8 +33,8 @@ export async function POST(request: Request) {
     const { name, type, workSeconds, restSeconds, rounds, prepSeconds } = await request.json()
 
     const [preset] = await sql`
-      INSERT INTO timer_presets (user_id, name, type, work_seconds, rest_seconds, rounds, prep_seconds)
-      VALUES (${user.id}, ${name}, ${type}, ${workSeconds}, ${restSeconds}, ${rounds}, ${prepSeconds || 10})
+      INSERT INTO timer_presets (user_id, name, timer_type, config)
+      VALUES (${user.id}, ${name}, ${type}, ${JSON.stringify({ workSeconds, restSeconds, rounds, prepSeconds: prepSeconds || 10 })})
       RETURNING *
     `
 
