@@ -52,10 +52,10 @@ export async function POST(
     const { action, rating } = await request.json()
 
     if (action === 'use') {
-      // Increment use count
+      // Increment usage count
       await sql`
         UPDATE workout_templates 
-        SET use_count = use_count + 1 
+        SET usage_count = COALESCE(usage_count, 0) + 1 
         WHERE id = ${id}
       `
       return NextResponse.json({ success: true })

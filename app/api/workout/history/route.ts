@@ -30,13 +30,11 @@ export async function GET() {
         ws.day_of_week,
         ws.started_at,
         ws.completed_at,
-        ws.duration_minutes,
-        ws.total_volume,
-        ws.calories_burned,
+        ws.status,
         ws.notes,
-        ws.gym_verified,
+        EXTRACT(EPOCH FROM (COALESCE(ws.completed_at, NOW()) - ws.started_at))/60 as duration_minutes,
         COUNT(el.id) as exercise_count,
-        SUM(el.sets_completed) as total_sets
+        COALESCE(SUM(el.actual_weight_kg * el.actual_reps), 0) as total_volume
       FROM workout_sessions ws
       LEFT JOIN exercise_logs el ON el.session_id = ws.id
       WHERE ws.user_id = ${userId}
@@ -64,19 +62,22 @@ export async function GET() {
     const stats = await sql`
       SELECT 
         COUNT(*) as total_workouts,
-        SUM(duration_minutes) as total_minutes,
-        SUM(calories_burned) as total_calories,
-        SUM(total_volume) as total_volume,
-        AVG(duration_minutes) as avg_duration
-      FROM workout_sessions
-      WHERE user_id = ${userId} AND completed_at IS NOT NULL
+        SUM(EXTRACT(EPOCH FROM (COALESCE(ws.completed_at, NOW()) - ws.started_at))/60) as total_minutes,
+        AVG(EXTRACT(EPOCH FROM (COALESCE(ws.completed_at, NOW()) - ws.started_at))/60) as avg_duration
+      FROM workout_sessions ws
+      WHERE ws.user_id = ${userId} AND ws.completed_at IS NOT NULL
     `
 
     return NextResponse.json({
       workouts,
       personalRecords: prs,
       streak: streaks[0] || { current_streak: 0, longest_streak: 0 },
-      stats: stats[0] || {}
+      stats: {
+        total_workouts: stats[0]?.total_workouts || 0,
+        total_minutes: Math.round(stats[0]?.total_minutes || 0),
+        total_calories: 0, // Not tracked in DB
+        avg_duration: Math.round(stats[0]?.avg_duration || 0)
+      }
     })
   } catch (error) {
     console.error('History fetch error:', error)

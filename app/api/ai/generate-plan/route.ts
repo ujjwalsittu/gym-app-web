@@ -77,7 +77,7 @@ export async function POST() {
     const photosResult = await sql`
       SELECT * FROM body_photos 
       WHERE user_id = ${userId} 
-      ORDER BY created_at DESC 
+      ORDER BY uploaded_at DESC 
       LIMIT 1
     `
 
@@ -86,39 +86,28 @@ export async function POST() {
     // Build prompt with all user data
     const userContext = `
 User Profile:
-- Age: ${profile.age} years
-- Gender: ${profile.gender}
-- Height: ${profile.height_cm} cm
-- Current Weight: ${profile.weight_kg} kg
+- Age: ${profile.age || 'Not specified'} years
+- Gender: ${profile.gender || 'Not specified'}
+- Height: ${profile.height_cm || 'Not specified'} cm
+- Current Weight: ${profile.weight_kg || 'Not specified'} kg
 - Target Weight: ${profile.target_weight_kg || 'Not specified'} kg
-- Activity Level: ${profile.activity_level}
-- Sleep Hours: ${profile.sleep_hours} hours/night
-- Occupation: ${profile.occupation}
-- Stress Level: ${profile.stress_level}
+- Activity Level: ${profile.activity_level || 'moderate'}
+- Sleep Hours: ${profile.sleep_hours || 7} hours/night
 
 Diet Information:
-- Diet Type: ${profile.diet_type}
-- Meals Per Day: ${profile.meals_per_day}
-- Water Intake: ${profile.water_intake_glasses} glasses/day
-- Supplements: ${JSON.parse(profile.supplements || '[]').join(', ') || 'None'}
-
-Lifestyle Habits:
-- Smoking: ${profile.smoking_status}
-- Alcohol: ${profile.alcohol_consumption}
-- Caffeine: ${profile.caffeine_intake}
+- Diet Type: ${profile.diet_type || 'balanced'}
+- Meals Per Day: ${profile.meals_per_day || 3}
+- Water Intake: ${profile.water_intake_liters || 2} liters/day
 
 Fitness Goals:
-- Primary Goal: ${profile.primary_goal}
-- Workout Days Per Week: ${profile.workout_days_per_week}
-- Workout Duration: ${profile.workout_duration_minutes} minutes
-- Gym Access: ${profile.gym_access ? 'Yes' : 'No'}
-- Home Equipment: ${JSON.parse(profile.equipment_at_home || '[]').join(', ') || 'None'}
+- Primary Goal: ${profile.fitness_goal || 'general_fitness'}
+- Workout Days Per Week: ${profile.preferred_workout_days || 4}
+- Workout Experience: ${profile.workout_experience || 'beginner'}
 
 Medical Considerations:
 - Medical Conditions: ${JSON.parse(profile.medical_conditions || '[]').join(', ') || 'None'}
 - Injuries: ${JSON.parse(profile.injuries || '[]').join(', ') || 'None'}
-- Medications: ${JSON.parse(profile.medications || '[]').join(', ') || 'None'}
-- Food Allergies: ${JSON.parse(profile.allergies || '[]').join(', ') || 'None'}
+- Food Allergies: ${JSON.parse(profile.food_allergies || '[]').join(', ') || 'None'}
 
 Location: ${profile.city || ''}, ${profile.state || ''}, ${profile.country || ''}
 `
@@ -141,7 +130,7 @@ Create a safe, effective, and sustainable plan that progressively challenges the
     let userContent: string | Array<{ type: 'text'; text: string } | { type: 'image'; image: string }> = `${userContext}\n\nPlease analyze my profile and create a comprehensive fitness and nutrition plan.`
 
     // If photos are available, include them in analysis
-    if (photos && (photos.photo_front_url || photos.photo_left_url || photos.photo_right_url)) {
+    if (photos && photos.blob_url) {
       userContent = [
         { type: 'text' as const, text: `${userContext}\n\nI've uploaded body photos for analysis. Please analyze my body composition, posture, and muscle development to create a targeted fitness and nutrition plan.` }
       ]

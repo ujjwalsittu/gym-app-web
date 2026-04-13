@@ -20,21 +20,15 @@ export async function GET(request: Request) {
     const sessions = await sql`
       SELECT 
         ws.id,
-        ws.start_time,
-        ws.end_time,
+        ws.started_at,
+        ws.completed_at,
         ws.status,
-        ws.gym_verified,
-        ws.total_exercises,
-        ws.total_sets,
-        ws.calories_burned,
-        wp.name as workout_name,
-        wp.day_of_week
+        ws.notes
       FROM workout_sessions ws
-      LEFT JOIN workout_plans wp ON ws.workout_plan_id = wp.id
       WHERE ws.user_id = ${user.id}
-        AND ws.start_time >= ${startDate.toISOString()}
-        AND ws.start_time <= ${endDate.toISOString()}
-      ORDER BY ws.start_time ASC
+        AND ws.started_at >= ${startDate.toISOString()}
+        AND ws.started_at <= ${endDate.toISOString()}
+      ORDER BY ws.started_at ASC
     `
 
     // Get workout plan for scheduled days
@@ -62,9 +56,7 @@ export async function GET(request: Request) {
       session?: {
         id: string
         status: string
-        gymVerified: boolean
         duration: number
-        calories: number
         exercises: number
       }
       scheduledWorkout?: string
@@ -90,30 +82,27 @@ export async function GET(request: Request) {
 
     // Mark completed workouts
     for (const session of sessions) {
-      const dateStr = new Date(session.start_time).toISOString().split('T')[0]
+      const dateStr = new Date(session.started_at).toISOString().split('T')[0]
       if (calendarDays[dateStr]) {
-        const duration = session.end_time 
-          ? Math.round((new Date(session.end_time).getTime() - new Date(session.start_time).getTime()) / 60000)
+        const duration = session.completed_at 
+          ? Math.round((new Date(session.completed_at).getTime() - new Date(session.started_at).getTime()) / 60000)
           : 0
         
         calendarDays[dateStr].hasWorkout = true
         calendarDays[dateStr].session = {
           id: session.id,
           status: session.status,
-          gymVerified: session.gym_verified,
           duration,
-          calories: session.calories_burned || 0,
-          exercises: session.total_exercises || 0
+          exercises: 0
         }
       }
     }
 
     // Calculate monthly stats
     const completedWorkouts = sessions.filter((s: { status: string }) => s.status === 'completed').length
-    const totalCalories = sessions.reduce((sum: number, s: { calories_burned: number }) => sum + (s.calories_burned || 0), 0)
-    const totalMinutes = sessions.reduce((sum: number, s: { start_time: string, end_time: string }) => {
-      if (s.end_time) {
-        return sum + Math.round((new Date(s.end_time).getTime() - new Date(s.start_time).getTime()) / 60000)
+    const totalMinutes = sessions.reduce((sum: number, s: { started_at: string, completed_at: string }) => {
+      if (s.completed_at) {
+        return sum + Math.round((new Date(s.completed_at).getTime() - new Date(s.started_at).getTime()) / 60000)
       }
       return sum
     }, 0)
@@ -124,7 +113,6 @@ export async function GET(request: Request) {
       days: Object.values(calendarDays),
       stats: {
         completedWorkouts,
-        totalCalories,
         totalMinutes,
         currentStreak: streak.current_streak,
         longestStreak: streak.longest_streak

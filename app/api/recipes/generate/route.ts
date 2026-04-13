@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
       prompt: `Generate a healthy ${mealType} recipe for someone with the following profile:
 
 Diet Type: ${profile.diet_type || 'balanced'}
-Allergies: ${profile.allergies || 'none'}
+Allergies: ${profile.food_allergies ? JSON.parse(profile.food_allergies).join(', ') : 'none'}
 Target Daily Calories: ${diet?.daily_calories || 2000}
 Target Protein: ${diet?.protein_grams || 150}g
 Target Carbs: ${diet?.carbs_grams || 200}g

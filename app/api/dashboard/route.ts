@@ -81,9 +81,9 @@ export async function GET() {
         weight: profile.weight_kg,
         height: profile.height_cm,
         targetWeight: profile.target_weight_kg,
-        primaryGoal: profile.primary_goal,
-        workoutDaysPerWeek: profile.workout_days_per_week,
-        gymAccess: profile.gym_access,
+        primaryGoal: profile.fitness_goal,
+        workoutDaysPerWeek: profile.preferred_workout_days,
+        workoutExperience: profile.workout_experience,
         bodyAnalysis
       } : null,
       workoutPlan: workoutPlan ? {
