@@ -42,13 +42,28 @@ export async function createUser(email: string, password: string, name: string):
   try {
     const passwordHash = await hashPassword(password)
     
-    const result = await sql`
-      INSERT INTO users (email, password_hash, name)
-      VALUES (${email.toLowerCase()}, ${passwordHash}, ${name})
-      RETURNING id, email, name, onboarding_completed, created_at
+    // Insert user into users table (no name column - name goes in user_profiles)
+    const userResult = await sql`
+      INSERT INTO users (email, password_hash)
+      VALUES (${email.toLowerCase()}, ${passwordHash})
+      RETURNING id, email, created_at
     `
     
-    return result[0] as User
+    const user = userResult[0]
+    
+    // Create user profile with the name
+    await sql`
+      INSERT INTO user_profiles (user_id, full_name, onboarding_completed, onboarding_step)
+      VALUES (${user.id}, ${name}, false, 1)
+    `
+    
+    return {
+      id: user.id,
+      email: user.email,
+      name: name,
+      onboarding_completed: false,
+      created_at: user.created_at
+    } as User
   } catch (error: unknown) {
     // Check for unique constraint violation (duplicate email)
     if (error && typeof error === 'object' && 'code' in error && error.code === '23505') {
@@ -61,9 +76,11 @@ export async function createUser(email: string, password: string, name: string):
 // Authenticate user and create session
 export async function authenticateUser(email: string, password: string): Promise<{ user: User; sessionToken: string } | null> {
   const result = await sql`
-    SELECT id, email, password_hash, name, onboarding_completed, created_at
-    FROM users
-    WHERE email = ${email.toLowerCase()}
+    SELECT u.id, u.email, u.password_hash, u.created_at,
+           p.full_name as name, COALESCE(p.onboarding_completed, false) as onboarding_completed
+    FROM users u
+    LEFT JOIN user_profiles p ON u.id = p.user_id
+    WHERE u.email = ${email.toLowerCase()}
   `
   
   if (result.length === 0) {
@@ -132,11 +149,12 @@ export async function getSession(): Promise<{ session: Session; user: User } | n
       s.expires_at,
       u.id,
       u.email,
-      u.name,
-      u.onboarding_completed,
-      u.created_at
+      u.created_at,
+      p.full_name as name,
+      COALESCE(p.onboarding_completed, false) as onboarding_completed
     FROM sessions s
     JOIN users u ON s.user_id = u.id
+    LEFT JOIN user_profiles p ON u.id = p.user_id
     WHERE s.token = ${sessionToken}
       AND s.expires_at > NOW()
   `
