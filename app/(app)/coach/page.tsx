@@ -34,8 +34,9 @@ export default function CoachPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (input.trim() && !isLoading) {
-      sendMessage({ text: input })
+    const trimmedInput = input?.trim() || ''
+    if (trimmedInput && !isLoading) {
+      sendMessage({ text: trimmedInput })
       setInput('')
     }
   }
@@ -164,13 +165,13 @@ export default function CoachPage() {
         <form onSubmit={handleSubmit} className="flex gap-2 max-w-lg mx-auto">
           <Input
             ref={inputRef}
-            value={input}
+            value={input ?? ''}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask your coach anything..."
             className="flex-1"
             disabled={isLoading}
           />
-          <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
+          <Button type="submit" size="icon" disabled={isLoading || !(input?.trim())}>
             {isLoading ? <Spinner className="h-4 w-4" /> : <Send className="h-4 w-4" />}
           </Button>
         </form>
