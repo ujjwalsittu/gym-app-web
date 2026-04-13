@@ -37,7 +37,7 @@ export async function GET() {
 
     // Group photos by date for comparison
     const groupedPhotos: Record<string, any[]> = {}
-    photos.forEach((photo: any) => {
+    transformedPhotos.forEach((photo: any) => {
       const dateKey = new Date(photo.uploaded_at || photo.created_at).toISOString().split('T')[0]
       if (!groupedPhotos[dateKey]) {
         groupedPhotos[dateKey] = []
