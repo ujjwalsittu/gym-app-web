@@ -82,7 +82,7 @@ export async function authenticateUser(email: string, password: string): Promise
   const expiresAt = new Date(Date.now() + SESSION_DURATION_DAYS * 24 * 60 * 60 * 1000)
   
   await sql`
-    INSERT INTO sessions (user_id, session_token, expires_at)
+    INSERT INTO sessions (user_id, token, expires_at)
     VALUES (${user.id}, ${sessionToken}, ${expiresAt})
   `
   
@@ -137,7 +137,7 @@ export async function getSession(): Promise<{ session: Session; user: User } | n
       u.created_at
     FROM sessions s
     JOIN users u ON s.user_id = u.id
-    WHERE s.session_token = ${sessionToken}
+    WHERE s.token = ${sessionToken}
       AND s.expires_at > NOW()
   `
   
@@ -191,7 +191,7 @@ export async function logout(): Promise<void> {
   const sessionToken = cookieStore.get(SESSION_COOKIE_NAME)?.value
   
   if (sessionToken) {
-    await sql`DELETE FROM sessions WHERE session_token = ${sessionToken}`
+    await sql`DELETE FROM sessions WHERE token = ${sessionToken}`
   }
   
   cookieStore.delete(SESSION_COOKIE_NAME)
