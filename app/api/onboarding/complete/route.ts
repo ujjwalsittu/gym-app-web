@@ -13,128 +13,64 @@ export async function POST(request: Request) {
     const data: OnboardingData = await request.json()
     const userId = session.user.id
 
-    console.log('[v0] Saving onboarding data for user:', userId)
+    // Map onboarding data to user_profiles columns (matching actual DB schema)
+    // user_profiles columns: age, gender, height_cm, weight_kg, target_weight_kg, 
+    // activity_level, sleep_hours, diet_type, meals_per_day, water_intake_liters,
+    // fitness_goal, workout_duration_minutes, preferred_workout_days, workout_experience,
+    // medical_conditions, injuries, food_allergies, country, state, city, timezone,
+    // smoking_status, alcohol_status, full_name, onboarding_completed, onboarding_step
+
     await sql`
-      INSERT INTO user_profiles (
-        user_id,
-        age,
-        gender,
-        height_cm,
-        weight_kg,
-        target_weight_kg,
-        activity_level,
-        sleep_hours,
-        occupation,
-        stress_level,
-        diet_type,
-        meals_per_day,
-        water_intake_glasses,
-        supplements,
-        smoking_status,
-        alcohol_consumption,
-        caffeine_intake,
-        primary_goal,
-        workout_days_per_week,
-        workout_duration_minutes,
-        gym_access,
-        equipment_at_home,
-        medical_conditions,
-        injuries,
-        medications,
-        allergies,
-        country,
-        state,
-        city,
-        timezone
-      )
-      VALUES (
-        ${userId},
-        ${data.age},
-        ${data.gender},
-        ${data.height},
-        ${data.weight},
-        ${data.targetWeight},
-        ${data.activityLevel},
-        ${data.sleepHours},
-        ${data.occupation},
-        ${data.stressLevel},
-        ${data.dietType},
-        ${data.mealsPerDay},
-        ${data.waterIntake},
-        ${JSON.stringify(data.supplements)},
-        ${data.smokingStatus},
-        ${data.alcoholConsumption},
-        ${data.caffeineIntake},
-        ${data.primaryGoal},
-        ${data.workoutDaysPerWeek},
-        ${data.workoutDuration},
-        ${data.gymAccess},
-        ${JSON.stringify(data.equipmentAtHome)},
-        ${JSON.stringify(data.medicalConditions)},
-        ${JSON.stringify(data.injuries)},
-        ${JSON.stringify(data.medications)},
-        ${JSON.stringify(data.allergies)},
-        ${data.country},
-        ${data.state},
-        ${data.city},
-        ${data.timezone}
-      )
-      ON CONFLICT (user_id) DO UPDATE SET
-        age = EXCLUDED.age,
-        gender = EXCLUDED.gender,
-        height_cm = EXCLUDED.height_cm,
-        weight_kg = EXCLUDED.weight_kg,
-        target_weight_kg = EXCLUDED.target_weight_kg,
-        activity_level = EXCLUDED.activity_level,
-        sleep_hours = EXCLUDED.sleep_hours,
-        occupation = EXCLUDED.occupation,
-        stress_level = EXCLUDED.stress_level,
-        diet_type = EXCLUDED.diet_type,
-        meals_per_day = EXCLUDED.meals_per_day,
-        water_intake_glasses = EXCLUDED.water_intake_glasses,
-        supplements = EXCLUDED.supplements,
-        smoking_status = EXCLUDED.smoking_status,
-        alcohol_consumption = EXCLUDED.alcohol_consumption,
-        caffeine_intake = EXCLUDED.caffeine_intake,
-        primary_goal = EXCLUDED.primary_goal,
-        workout_days_per_week = EXCLUDED.workout_days_per_week,
-        workout_duration_minutes = EXCLUDED.workout_duration_minutes,
-        gym_access = EXCLUDED.gym_access,
-        equipment_at_home = EXCLUDED.equipment_at_home,
-        medical_conditions = EXCLUDED.medical_conditions,
-        injuries = EXCLUDED.injuries,
-        medications = EXCLUDED.medications,
-        allergies = EXCLUDED.allergies,
-        country = EXCLUDED.country,
-        state = EXCLUDED.state,
-        city = EXCLUDED.city,
-        timezone = EXCLUDED.timezone,
+      UPDATE user_profiles SET
+        age = ${data.age},
+        gender = ${data.gender},
+        height_cm = ${data.height},
+        weight_kg = ${data.weight},
+        target_weight_kg = ${data.targetWeight},
+        activity_level = ${data.activityLevel},
+        sleep_hours = ${data.sleepHours},
+        diet_type = ${data.dietType},
+        meals_per_day = ${data.mealsPerDay},
+        water_intake_liters = ${data.waterIntake ? data.waterIntake * 0.25 : null},
+        fitness_goal = ${data.primaryGoal},
+        workout_duration_minutes = ${data.workoutDuration},
+        preferred_workout_days = ${data.workoutDaysPerWeek},
+        medical_conditions = ${data.medicalConditions},
+        injuries = ${data.injuries},
+        food_allergies = ${data.allergies},
+        country = ${data.country},
+        state = ${data.state},
+        city = ${data.city},
+        timezone = ${data.timezone},
+        smoking_status = ${data.smokingStatus},
+        alcohol_status = ${data.alcoholConsumption},
+        onboarding_completed = true,
         updated_at = NOW()
-    `
-
-    // Save body photos
-    if (data.photoFront || data.photoLeft || data.photoRight) {
-      await sql`
-        INSERT INTO body_photos (user_id, photo_front_url, photo_left_url, photo_right_url)
-        VALUES (
-          ${userId},
-          ${data.photoFront},
-          ${data.photoLeft},
-          ${data.photoRight}
-        )
-      `
-    }
-
-    console.log('[v0] Onboarding profile updated successfully')
-
-    // Mark onboarding as complete in user_profiles
-    await sql`
-      UPDATE user_profiles 
-      SET onboarding_completed = true, updated_at = NOW()
       WHERE user_id = ${userId}
     `
 
-    console.log('[v0] Marked onboarding as complete')
+    // Save body photos if provided (body_photos table has: user_id, photo_type, blob_url)
+    if (data.photoFront) {
+      await sql`
+        INSERT INTO body_photos (user_id, photo_type, blob_url)
+        VALUES (${userId}, 'front', ${data.photoFront})
+        ON CONFLICT DO NOTHING
+      `
+    }
+    if (data.photoLeft) {
+      await sql`
+        INSERT INTO body_photos (user_id, photo_type, blob_url)
+        VALUES (${userId}, 'left', ${data.photoLeft})
+        ON CONFLICT DO NOTHING
+      `
+    }
+    if (data.photoRight) {
+      await sql`
+        INSERT INTO body_photos (user_id, photo_type, blob_url)
+        VALUES (${userId}, 'right', ${data.photoRight})
+        ON CONFLICT DO NOTHING
+      `
+    }
 
     return NextResponse.json({ success: true })
   } catch (error) {
