@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
@@ -6,18 +6,19 @@ import './globals.css'
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: '#0f0f14',
+}
+
 export const metadata: Metadata = {
   title: 'VisionaryFit - AI Personal Trainer',
   description: 'Your personalized AI-powered fitness coach. Get custom workout plans, diet recommendations, and track your progress.',
   generator: 'v0.app',
   manifest: '/manifest.json',
-  themeColor: '#0f0f14',
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-  },
   icons: {
     icon: [
       {
