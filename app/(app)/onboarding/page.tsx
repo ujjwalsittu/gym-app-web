@@ -74,7 +74,7 @@ export default function OnboardingPage() {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
               <Dumbbell className="h-4 w-4 text-primary-foreground" />
             </div>
-            <span className="font-semibold">VisionaryFit</span>
+            <span className="font-semibold">hell.fitness</span>
           </div>
           <span className="text-sm text-muted-foreground">
             Step {currentStep} of {TOTAL_STEPS}

@@ -1,8 +1,8 @@
-// VisionaryFit Service Worker - Enhanced Offline Support
-const CACHE_NAME = 'visionaryfit-v2'
+// hell.fitness Service Worker - Enhanced Offline Support
+const CACHE_NAME = 'hell-fitness-v2'
 const OFFLINE_URL = '/offline.html'
-const WORKOUT_CACHE = 'visionaryfit-workouts-v1'
-const API_CACHE = 'visionaryfit-api-v1'
+const WORKOUT_CACHE = 'hell-fitness-workouts-v1'
+const API_CACHE = 'hell-fitness-api-v1'
 
 // Static assets to cache immediately
 const STATIC_ASSETS = [

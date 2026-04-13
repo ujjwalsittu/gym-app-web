@@ -3,7 +3,7 @@
 import { openDB, DBSchema, IDBPDatabase } from 'idb'
 
 // Database schema for offline storage
-interface VisionaryFitDB extends DBSchema {
+interface HellFitnessDB extends DBSchema {
   workouts: {
     key: string
     value: {
@@ -63,7 +63,7 @@ let dbInstance: IDBPDatabase<VisionaryFitDB> | null = null
 export async function initOfflineDB(): Promise<IDBPDatabase<VisionaryFitDB>> {
   if (dbInstance) return dbInstance
 
-  dbInstance = await openDB<VisionaryFitDB>('visionaryfit-offline', 2, {
+  dbInstance = await openDB<HellFitnessDB>('hell-fitness-offline', 2, {
     upgrade(db, oldVersion) {
       // Workouts store
       if (!db.objectStoreNames.contains('workouts')) {

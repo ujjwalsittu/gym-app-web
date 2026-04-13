@@ -15,7 +15,7 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
-  title: 'VisionaryFit - AI Personal Trainer',
+  title: 'hell.fitness - AI Personal Trainer',
   description: 'Your personalized AI-powered fitness coach. Get custom workout plans, diet recommendations, and track your progress.',
   generator: 'v0.app',
   manifest: '/manifest.json',
