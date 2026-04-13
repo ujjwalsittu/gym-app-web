@@ -67,7 +67,7 @@ export default function RegisterPage() {
           <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary">
             <Dumbbell className="h-8 w-8 text-primary-foreground" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">VisionaryFit</h1>
+          <h1 className="text-2xl font-bold tracking-tight">hell.fitness</h1>
           <p className="text-sm text-muted-foreground">Start Your Transformation</p>
         </div>
 
