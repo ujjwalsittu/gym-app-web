@@ -21,6 +21,7 @@ export const metadata: Metadata = {
   manifest: '/manifest.json',
   icons: {
     icon: [
+      { url: '/favicon.ico', sizes: '32x32', type: 'image/x-icon' },
       {
         url: '/icon-light-32x32.png',
         media: '(prefers-color-scheme: light)',
