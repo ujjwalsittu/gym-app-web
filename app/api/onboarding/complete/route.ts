@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     const data: OnboardingData = await request.json()
     const userId = session.user.id
 
-    // Start transaction by inserting/updating user profile
+    console.log('[v0] Saving onboarding data for user:', userId)
     await sql`
       INSERT INTO user_profiles (
         user_id,
@@ -125,16 +125,20 @@ export async function POST(request: Request) {
       `
     }
 
-    // Mark onboarding as complete
+    console.log('[v0] Onboarding profile updated successfully')
+
+    // Mark onboarding as complete in user_profiles
     await sql`
-      UPDATE users 
-      SET onboarding_completed = true 
-      WHERE id = ${userId}
+      UPDATE user_profiles 
+      SET onboarding_completed = true, updated_at = NOW()
+      WHERE user_id = ${userId}
     `
+
+    console.log('[v0] Marked onboarding as complete')
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Onboarding error:', error)
+    console.error('[v0] Onboarding error:', error)
     return NextResponse.json(
       { error: 'Failed to save profile' },
       { status: 500 }
