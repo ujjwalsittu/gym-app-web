@@ -1,274 +1,159 @@
 'use client'
 
-import { useState, useCallback } from 'react'
-import { Button } from '@/components/ui/button'
+import { useState, useEffect } from 'react'
+import useSWR from 'swr'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Progress } from '@/components/ui/progress'
-import { Upload, CheckCircle2, XCircle, Loader2, FileVideo, FolderOpen } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { CheckCircle2, Circle, Edit } from 'lucide-react'
 
-interface UploadResult {
-  success: boolean
-  exerciseName: string
+interface Exercise {
+  id: string
+  name: string
   category: string
-  subcategory: string
-  videoUrl?: string
-  error?: string
+  equipment: string
+  gender: string
+  difficulty: string
+  is_active: boolean
+  has_animation: boolean
 }
 
 export default function AdminExercisesPage() {
-  const [uploading, setUploading] = useState(false)
-  const [progress, setProgress] = useState(0)
-  const [results, setResults] = useState<UploadResult[]>([])
-  const [totalFiles, setTotalFiles] = useState(0)
-  const [processedFiles, setProcessedFiles] = useState(0)
-  const [currentFile, setCurrentFile] = useState('')
+  const [exercises, setExercises] = useState<Exercise[]>([])
+  const [search, setSearch] = useState('')
+  const [category, setCategory] = useState('')
+  const [page, setPage] = useState(0)
 
-  const handleZipUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+  const { data, isLoading } = useSWR(
+    `/api/admin/exercises/list?search=${search}&category=${category}&limit=20&offset=${page * 20}`,
+    (url) => fetch(url).then((res) => res.json())
+  )
 
-    if (!file.name.endsWith('.zip')) {
-      alert('Please upload a ZIP file')
-      return
+  useEffect(() => {
+    if (data?.exercises) {
+      setExercises(data.exercises)
     }
+  }, [data])
 
-    setUploading(true)
-    setProgress(0)
-    setResults([])
-    setProcessedFiles(0)
-
-    const formData = new FormData()
-    formData.append('file', file)
-
-    try {
-      const response = await fetch('/api/admin/exercises/upload-zip', {
-        method: 'POST',
-        body: formData,
-      })
-
-      if (!response.ok) {
-        throw new Error('Upload failed')
-      }
-
-      // Stream the response for progress updates
-      const reader = response.body?.getReader()
-      const decoder = new TextDecoder()
-
-      if (reader) {
-        let buffer = ''
-        while (true) {
-          const { done, value } = await reader.read()
-          if (done) break
-
-          buffer += decoder.decode(value, { stream: true })
-          const lines = buffer.split('\n')
-          buffer = lines.pop() || ''
-
-          for (const line of lines) {
-            if (line.trim()) {
-              try {
-                const data = JSON.parse(line)
-                if (data.type === 'progress') {
-                  setTotalFiles(data.total)
-                  setProcessedFiles(data.processed)
-                  setCurrentFile(data.currentFile)
-                  setProgress((data.processed / data.total) * 100)
-                } else if (data.type === 'result') {
-                  setResults(prev => [...prev, data.result])
-                } else if (data.type === 'complete') {
-                  setProgress(100)
-                }
-              } catch {
-                // Ignore parse errors
-              }
-            }
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Upload error:', error)
-      alert('Failed to upload ZIP file. Please try again.')
-    } finally {
-      setUploading(false)
-    }
-  }, [])
-
-  const successCount = results.filter(r => r.success).length
-  const failCount = results.filter(r => !r.success).length
+  const difficultyColors = {
+    beginner: 'bg-green-100 text-green-800',
+    intermediate: 'bg-yellow-100 text-yellow-800',
+    advanced: 'bg-red-100 text-red-800'
+  }
 
   return (
-    <div className="container max-w-4xl py-8 space-y-8">
+    <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Exercise Video Manager</h1>
+        <h1 className="text-3xl font-bold">Manage Exercises</h1>
         <p className="text-muted-foreground">
-          Upload a ZIP file containing exercise videos organized by category
+          {data?.total || 0} total exercises
         </p>
       </div>
 
-      {/* Upload Instructions */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FolderOpen className="h-5 w-5" />
-            ZIP Structure Requirements
-          </CardTitle>
-          <CardDescription>
-            Organize your videos in this folder structure
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <pre className="bg-muted p-4 rounded-lg text-sm overflow-x-auto">
-{`exercises.zip
-├── Upper Body/
-│   ├── Chest/
-│   │   ├── bench-press.mp4
-│   │   ├── push-ups.mp4
-│   │   └── dumbbell-fly.mp4
-│   ├── Back/
-│   │   ├── pull-ups.mp4
-│   │   └── rows.mp4
-│   └── Arms/
-│       ├── bicep-curl.mp4
-│       └── tricep-dips.mp4
-├── Lower Body/
-│   ├── Quads/
-│   │   ├── squats.mp4
-│   │   └── leg-press.mp4
-│   └── Glutes/
-│       └── lunges.mp4
-├── Core/
-│   ├── plank.mp4
-│   └── crunches.mp4
-└── Cardio/
-    ├── jumping-jacks.mp4
-    └── burpees.mp4`}
-          </pre>
-          <p className="text-sm text-muted-foreground mt-4">
-            File names become exercise names (hyphens/underscores converted to spaces, e.g., &quot;bench-press.mp4&quot; becomes &quot;Bench Press&quot;)
-          </p>
-        </CardContent>
-      </Card>
-
-      {/* Upload Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Upload className="h-5 w-5" />
-            Upload Exercise Videos
-          </CardTitle>
+          <CardTitle>Exercises</CardTitle>
+          <CardDescription>Filter and manage exercise library</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-center w-full">
-            <label
-              htmlFor="zip-upload"
-              className={`flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
-                uploading
-                  ? 'bg-muted border-muted-foreground/30 cursor-not-allowed'
-                  : 'hover:bg-muted/50 border-muted-foreground/50'
-              }`}
-            >
-              <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                {uploading ? (
-                  <>
-                    <Loader2 className="h-10 w-10 mb-3 text-primary animate-spin" />
-                    <p className="text-sm text-muted-foreground">Processing videos...</p>
-                  </>
-                ) : (
-                  <>
-                    <FileVideo className="h-10 w-10 mb-3 text-muted-foreground" />
-                    <p className="mb-2 text-sm">
-                      <span className="font-semibold">Click to upload</span> or drag and drop
-                    </p>
-                    <p className="text-xs text-muted-foreground">ZIP file containing MP4 videos</p>
-                  </>
-                )}
-              </div>
-              <input
-                id="zip-upload"
-                type="file"
-                accept=".zip"
-                className="hidden"
-                onChange={handleZipUpload}
-                disabled={uploading}
-              />
-            </label>
+          <div className="flex gap-4">
+            <Input
+              placeholder="Search exercises..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value)
+                setPage(0)
+              }}
+              className="max-w-sm"
+            />
+            <Input
+              placeholder="Filter by category..."
+              value={category}
+              onChange={(e) => {
+                setCategory(e.target.value)
+                setPage(0)
+              }}
+              className="max-w-sm"
+            />
           </div>
 
-          {/* Progress */}
-          {uploading && (
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Processing: {currentFile}</span>
-                <span>{processedFiles} / {totalFiles}</span>
-              </div>
-              <Progress value={progress} />
+          {isLoading ? (
+            <div className="text-center py-8 text-muted-foreground">Loading exercises...</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-3 px-4 font-medium">Name</th>
+                    <th className="text-left py-3 px-4 font-medium">Category</th>
+                    <th className="text-left py-3 px-4 font-medium">Equipment</th>
+                    <th className="text-left py-3 px-4 font-medium">Gender</th>
+                    <th className="text-left py-3 px-4 font-medium">Difficulty</th>
+                    <th className="text-left py-3 px-4 font-medium">Animation</th>
+                    <th className="text-left py-3 px-4 font-medium">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {exercises.map((exercise) => (
+                    <tr key={exercise.id} className="border-b hover:bg-muted/50">
+                      <td className="py-3 px-4 text-sm font-medium">{exercise.name}</td>
+                      <td className="py-3 px-4 text-sm">{exercise.category}</td>
+                      <td className="py-3 px-4 text-sm">{exercise.equipment}</td>
+                      <td className="py-3 px-4 text-sm">{exercise.gender}</td>
+                      <td className="py-3 px-4">
+                        <Badge className={difficultyColors[exercise.difficulty as keyof typeof difficultyColors] || ''}>
+                          {exercise.difficulty}
+                        </Badge>
+                      </td>
+                      <td className="py-3 px-4">
+                        {exercise.has_animation ? (
+                          <CheckCircle2 className="h-5 w-5 text-green-600" />
+                        ) : (
+                          <Circle className="h-5 w-5 text-muted-foreground" />
+                        )}
+                      </td>
+                      <td className="py-3 px-4">
+                        {exercise.is_active ? (
+                          <Badge className="bg-green-600">Active</Badge>
+                        ) : (
+                          <Badge variant="secondary">Inactive</Badge>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
 
-          {/* Results Summary */}
-          {results.length > 0 && (
-            <div className="flex gap-4 pt-4 border-t">
-              <div className="flex items-center gap-2 text-green-500">
-                <CheckCircle2 className="h-5 w-5" />
-                <span>{successCount} uploaded</span>
-              </div>
-              {failCount > 0 && (
-                <div className="flex items-center gap-2 text-red-500">
-                  <XCircle className="h-5 w-5" />
-                  <span>{failCount} failed</span>
-                </div>
-              )}
+          {!isLoading && exercises.length === 0 && (
+            <div className="text-center py-8 text-muted-foreground">No exercises found</div>
+          )}
+
+          {data?.total > 0 && (
+            <div className="flex gap-2 justify-center pt-4">
+              <Button
+                variant="outline"
+                onClick={() => setPage(Math.max(0, page - 1))}
+                disabled={page === 0}
+              >
+                Previous
+              </Button>
+              <span className="flex items-center px-4">
+                Page {page + 1} of {Math.ceil((data?.total || 1) / 20)}
+              </span>
+              <Button
+                variant="outline"
+                onClick={() => setPage(page + 1)}
+                disabled={page >= Math.ceil((data?.total || 1) / 20) - 1}
+              >
+                Next
+              </Button>
             </div>
           )}
         </CardContent>
       </Card>
-
-      {/* Results List */}
-      {results.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Upload Results</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="max-h-96 overflow-y-auto space-y-2">
-              {results.map((result, index) => (
-                <div
-                  key={index}
-                  className={`flex items-center gap-3 p-3 rounded-lg ${
-                    result.success ? 'bg-green-500/10' : 'bg-red-500/10'
-                  }`}
-                >
-                  {result.success ? (
-                    <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
-                  ) : (
-                    <XCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{result.exerciseName}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {result.category} {result.subcategory && `/ ${result.subcategory}`}
-                    </p>
-                  </div>
-                  {result.error && (
-                    <p className="text-xs text-red-500">{result.error}</p>
-                  )}
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Manual Refresh */}
-      <div className="flex justify-end">
-        <Button
-          variant="outline"
-          onClick={() => window.location.reload()}
-          disabled={uploading}
-        >
-          Refresh Page
-        </Button>
-      </div>
     </div>
   )
 }
