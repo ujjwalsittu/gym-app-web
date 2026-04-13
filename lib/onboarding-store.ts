@@ -103,4 +103,4 @@ export const useOnboardingStore = create<OnboardingStore>((set) => ({
   reset: () => set({ currentStep: 1, data: initialData })
 }))
 
-export const TOTAL_STEPS = 8
+export const TOTAL_STEPS = 9

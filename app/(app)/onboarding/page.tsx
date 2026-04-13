@@ -13,6 +13,7 @@ import { StepFitnessGoals } from '@/components/onboarding/step-fitness-goals'
 import { StepMedical } from '@/components/onboarding/step-medical'
 import { StepPhotos } from '@/components/onboarding/step-photos'
 import { StepLocation } from '@/components/onboarding/step-location'
+import { StepEquipment } from '@/components/onboarding/step-equipment'
 import { Dumbbell } from 'lucide-react'
 import { Spinner } from '@/components/ui/spinner'
 
@@ -60,6 +61,8 @@ export default function OnboardingPage() {
         return <StepPhotos />
       case 8:
         return <StepLocation />
+      case 9:
+        return <StepEquipment />
       default:
         return <StepPersonalInfo />
     }
