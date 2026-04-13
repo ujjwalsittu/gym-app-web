@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { authenticateUser, setSessionCookie } from '@/lib/auth'
+import { isUserAdmin } from '@/lib/admin'
 
 export async function POST(request: Request) {
   try {
@@ -26,14 +27,19 @@ export async function POST(request: Request) {
     
     // Set session cookie
     await setSessionCookie(authResult.sessionToken)
+
+    // Check if user is admin
+    const isAdmin = await isUserAdmin(authResult.user.id)
     
     return NextResponse.json({
       user: {
         id: authResult.user.id,
         email: authResult.user.email,
         name: authResult.user.name,
-        onboarding_completed: authResult.user.onboarding_completed
-      }
+        onboarding_completed: authResult.user.onboarding_completed,
+        isAdmin
+      },
+      redirect: isAdmin ? '/admin/dashboard' : (authResult.user.onboarding_completed ? '/dashboard' : '/onboarding')
     })
   } catch (error) {
     console.error('Login error:', error)

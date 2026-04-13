@@ -8,6 +8,7 @@ interface User {
   email: string
   name: string
   onboarding_completed: boolean
+  isAdmin?: boolean
 }
 
 interface AuthContextType {
@@ -59,8 +60,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       setUser(data.user)
       
-      // Redirect based on onboarding status
-      if (data.user.onboarding_completed) {
+      // Redirect based on admin status or onboarding
+      if (data.user.isAdmin) {
+        router.push('/admin/dashboard')
+      } else if (data.user.onboarding_completed) {
         router.push('/dashboard')
       } else {
         router.push('/onboarding')
