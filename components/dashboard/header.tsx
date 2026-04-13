@@ -13,15 +13,19 @@ import { Dumbbell, Bell, Settings, LogOut, User } from 'lucide-react'
 import Link from 'next/link'
 
 interface DashboardHeaderProps {
-  user: {
-    name: string
-    email: string
-  }
+  user?: {
+    name?: string
+    email?: string
+  } | null
 }
 
 export function DashboardHeader({ user }: DashboardHeaderProps) {
   const { logout } = useAuth()
   
+  if (!user) {
+    return null
+  }
+
   const greeting = () => {
     const hour = new Date().getHours()
     if (hour < 12) return 'Good morning'
@@ -39,7 +43,7 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
           </div>
           <div>
             <p className="text-xs text-muted-foreground">{greeting()}</p>
-            <p className="font-semibold">{user.name.split(' ')[0]}</p>
+            <p className="font-semibold">{(user.name || 'User').split(' ')[0]}</p>
           </div>
         </div>
 
@@ -60,8 +64,8 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
               <div className="px-2 py-2">
-                <p className="font-medium">{user.name}</p>
-                <p className="text-sm text-muted-foreground">{user.email}</p>
+                <p className="font-medium">{user.name || 'User'}</p>
+                <p className="text-sm text-muted-foreground">{user.email || 'No email'}</p>
               </div>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>

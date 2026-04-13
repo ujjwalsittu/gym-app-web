@@ -11,11 +11,12 @@ export async function GET() {
 
     const userId = session.user.id
 
-    // Get user profile
+    // Get user profile and full name
     const profileResult = await sql`
       SELECT * FROM user_profiles WHERE user_id = ${userId}
     `
     const profile = profileResult[0] || null
+    const fullName = profile?.full_name || 'User'
 
     // Get active workout plan
     const workoutPlanResult = await sql`
@@ -59,13 +60,12 @@ export async function GET() {
     const weeklyStatsResult = await sql`
       SELECT 
         COUNT(DISTINCT DATE(started_at)) as workout_days,
-        SUM(EXTRACT(EPOCH FROM (COALESCE(completed_at, NOW()) - started_at))/60) as total_minutes,
-        SUM(calories_burned) as total_calories
+        SUM(EXTRACT(EPOCH FROM (COALESCE(completed_at, NOW()) - started_at))/60) as total_minutes
       FROM workout_sessions 
       WHERE user_id = ${userId} 
       AND started_at >= ${weekAgo}
     `
-    const weeklyStats = weeklyStatsResult[0] || { workout_days: 0, total_minutes: 0, total_calories: 0 }
+    const weeklyStats = weeklyStatsResult[0] || { workout_days: 0, total_minutes: 0 }
 
     // Get body analysis
     const bodyAnalysis = profile?.body_analysis ? JSON.parse(profile.body_analysis) : null
@@ -73,7 +73,7 @@ export async function GET() {
     return NextResponse.json({
       user: {
         id: session.user.id,
-        name: session.user.name,
+        name: fullName,
         email: session.user.email
       },
       profile: profile ? {
@@ -104,8 +104,7 @@ export async function GET() {
       todayExercises,
       weeklyStats: {
         workoutDays: parseInt(String(weeklyStats.workout_days)) || 0,
-        totalMinutes: Math.round(parseFloat(String(weeklyStats.total_minutes)) || 0),
-        totalCalories: parseInt(String(weeklyStats.total_calories)) || 0
+        totalMinutes: Math.round(parseFloat(String(weeklyStats.total_minutes)) || 0)
       }
     })
   } catch (error) {
