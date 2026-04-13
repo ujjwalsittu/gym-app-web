@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { sql } from '@vercel/postgres'
+import { sql } from '@/lib/db'
 
 export async function GET(request: NextRequest) {
   try {
@@ -24,14 +24,16 @@ export async function GET(request: NextRequest) {
       LIMIT 1
     `
 
-    if (result.rows.length === 0) {
+    if (result.length === 0) {
       return NextResponse.json(
         { error: 'Exercise not found' },
         { status: 404 }
       )
     }
 
-    const lottieData = JSON.parse(result.rows[0].lottie_data)
+    const lottieData = typeof result[0].lottie_data === 'string' 
+      ? JSON.parse(result[0].lottie_data) 
+      : result[0].lottie_data
 
     return NextResponse.json({ lottieData })
   } catch (error) {

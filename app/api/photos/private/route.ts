@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { get } from '@vercel/blob'
-import { sql } from '@neon_http/database'
+import { sql } from '@/lib/db'
 
 export async function GET(request: NextRequest) {
   try {

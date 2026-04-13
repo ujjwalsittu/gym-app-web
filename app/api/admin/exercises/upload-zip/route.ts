@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { put } from '@vercel/blob'
-import { sql } from '@vercel/postgres'
+import { sql } from '@/lib/db'
 import { getSession } from '@/lib/auth'
 import JSZip from 'jszip'
 
@@ -110,28 +110,26 @@ export async function POST(request: NextRequest) {
                 LIMIT 1
               `
 
-              if (existing.rows.length > 0) {
+              if (existing.length > 0) {
                 // Update existing exercise
                 await sql`
                   UPDATE exercise_library 
                   SET video_url = ${blob.url},
-                      category = ${category},
-                      subcategory = ${subcategory}
-                  WHERE id = ${existing.rows[0].id}
+                      category = ${category}
+                  WHERE id = ${existing[0].id}
                 `
               } else {
                 // Insert new exercise
                 await sql`
-                  INSERT INTO exercise_library (id, name, category, subcategory, video_url, difficulty, muscle_groups, equipment)
+                  INSERT INTO exercise_library (name, category, video_url, difficulty, equipment, gender, is_active)
                   VALUES (
-                    gen_random_uuid(),
                     ${exerciseName},
                     ${category},
-                    ${subcategory},
                     ${blob.url},
                     'intermediate',
-                    ARRAY[]::text[],
-                    ARRAY[]::text[]
+                    ${category},
+                    'unisex',
+                    true
                   )
                 `
               }

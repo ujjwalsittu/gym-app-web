@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { sql } from '@vercel/postgres'
+import { sql } from '@/lib/db'
 
 export async function POST(request: NextRequest) {
   try {
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      exercise: result.rows[0]
+      exercise: result[0]
     })
   } catch (error) {
     console.error('Error adding exercise:', error)

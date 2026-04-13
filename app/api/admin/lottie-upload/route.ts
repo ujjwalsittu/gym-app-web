@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { put } from '@vercel/blob'
-import { sql } from '@vercel/postgres'
+import { sql } from '@/lib/db'
 import JSZip from 'jszip'
 
 interface ExerciseData {
@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
       try {
         categories.add(exercise.category)
 
-        // Insert into database with lottie_data stored directly (avoiding Blob for now)
+        // Insert into database with lottie_data stored directly
         await sql`
           INSERT INTO exercise_library (
             name,
@@ -126,12 +126,12 @@ export async function POST(request: NextRequest) {
             ${exercise.equipment},
             ${exercise.gender},
             'intermediate',
-            ${exercise.lottieJson},
+            ${exercise.lottieJson}::jsonb,
             true
           )
-          ON CONFLICT (LOWER(name), equipment, gender) 
+          ON CONFLICT (name, equipment, gender) 
           DO UPDATE SET 
-            lottie_data = ${exercise.lottieJson},
+            lottie_data = ${exercise.lottieJson}::jsonb,
             is_active = true
         `
 

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getSession } from '@/lib/auth'
-import { sql } from '@vercel/postgres'
+import { sql } from '@/lib/db'
 
 export async function POST() {
   try {

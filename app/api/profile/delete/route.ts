@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getSession } from '@/lib/auth'
-import { sql } from '@vercel/postgres'
-import { del, list } from '@vercel/blob'
+import { sql } from '@/lib/db'
+import { del } from '@vercel/blob'
 
 export async function DELETE() {
   try {
@@ -14,12 +14,12 @@ export async function DELETE() {
     const userId = session.user.id
 
     // Get all body photos for this user to delete from blob storage
-    const photosResult = await sql`
+    const photos = await sql`
       SELECT blob_url FROM body_photos WHERE user_id = ${userId}
     `
 
     // Delete photos from blob storage
-    for (const photo of photosResult.rows) {
+    for (const photo of photos) {
       if (photo.blob_url) {
         try {
           await del(photo.blob_url)

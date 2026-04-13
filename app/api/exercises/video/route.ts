@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { sql } from '@vercel/postgres'
+import { sql } from '@/lib/db'
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
 
     // Try exact match first
     let result = await sql`
-      SELECT video_url, category, subcategory, name 
+      SELECT video_url, category, name 
       FROM exercise_library 
       WHERE LOWER(REPLACE(REPLACE(name, '-', ' '), '_', ' ')) = ${normalizedName}
       AND video_url IS NOT NULL
@@ -22,9 +22,9 @@ export async function GET(request: NextRequest) {
     `
 
     // Try partial match if no exact match
-    if (result.rows.length === 0) {
+    if (result.length === 0) {
       result = await sql`
-        SELECT video_url, category, subcategory, name 
+        SELECT video_url, category, name 
         FROM exercise_library 
         WHERE (
           LOWER(name) LIKE ${'%' + normalizedName + '%'}
@@ -35,12 +35,11 @@ export async function GET(request: NextRequest) {
       `
     }
 
-    if (result.rows.length > 0) {
+    if (result.length > 0) {
       return NextResponse.json({
-        videoUrl: result.rows[0].video_url,
-        category: result.rows[0].category,
-        subcategory: result.rows[0].subcategory,
-        name: result.rows[0].name
+        videoUrl: result[0].video_url,
+        category: result[0].category,
+        name: result[0].name
       })
     }
 
