@@ -1,70 +1,142 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
-import { Loader2, Save, Settings, Database, Bell, Shield } from 'lucide-react'
-import { AdminNav } from '@/components/admin/nav'
+import { Label } from '@/components/ui/label'
+import { AlertCircle, Loader2, CheckCircle, Save, Settings, Database, Bell, Shield } from 'lucide-react'
+
+interface AdminSettings {
+  max_exercises_per_day: number
+  enable_telegram_notifications: boolean
+  enable_email_notifications: boolean
+  max_users: number
+  maintenance_mode: boolean
+}
 
 export default function AdminSettingsPage() {
-  const [saving, setSaving] = useState(false)
-  const [settings, setSettings] = useState({
-    maintenanceMode: false,
-    allowNewRegistrations: true,
-    requireEmailVerification: false,
-    maxUploadSizeMB: 10,
-    sessionTimeoutHours: 24,
+  const [settings, setSettings] = useState<AdminSettings>({
+    max_exercises_per_day: 10,
+    enable_telegram_notifications: false,
+    enable_email_notifications: true,
+    max_users: 1000,
+    maintenance_mode: false
   })
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState(false)
+
+  useEffect(() => {
+    loadSettings()
+  }, [])
+
+  const loadSettings = async () => {
+    try {
+      const res = await fetch('/api/admin/settings')
+      if (res.ok) {
+        const data = await res.json()
+        setSettings(data)
+      }
+    } catch (err) {
+      console.error('Failed to load settings:', err)
+      setError('Failed to load settings')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleSave = async () => {
     setSaving(true)
-    // TODO: Implement settings save API
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    setSaving(false)
+    setError('')
+    setSuccess(false)
+
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings)
+      })
+
+      if (!res.ok) {
+        const error = await res.json()
+        throw new Error(error.error || 'Failed to save settings')
+      }
+
+      setSuccess(true)
+      setTimeout(() => setSuccess(false), 3000)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save settings')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    )
   }
 
   return (
-    <div className="space-y-6">
-      <AdminNav />
-      
+    <div className="space-y-6 py-8 max-w-3xl mx-auto">
       <div>
         <h1 className="text-3xl font-bold">Admin Settings</h1>
-        <p className="text-muted-foreground">Configure application settings</p>
+        <p className="text-muted-foreground">Configure system-wide application settings</p>
       </div>
 
-      <div className="grid gap-6">
+      {error && (
+        <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-red-700">{error}</p>
+        </div>
+      )}
+
+      {success && (
+        <div className="flex items-start gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+          <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-green-700">Settings saved successfully</p>
+        </div>
+      )}
+
+      <div className="space-y-6">
         {/* General Settings */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Settings className="h-5 w-5" />
-              General Settings
+              Workout Settings
             </CardTitle>
-            <CardDescription>Basic application configuration</CardDescription>
+            <CardDescription>Configure exercise and workout limits</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label>Maintenance Mode</Label>
-                <p className="text-sm text-muted-foreground">Disable access for non-admin users</p>
-              </div>
-              <Switch
-                checked={settings.maintenanceMode}
-                onCheckedChange={(checked) => setSettings(s => ({ ...s, maintenanceMode: checked }))}
+            <div className="grid gap-2">
+              <Label htmlFor="max-exercises">Max Exercises Per Day</Label>
+              <Input
+                id="max-exercises"
+                type="number"
+                value={settings.max_exercises_per_day}
+                onChange={(e) => setSettings({ ...settings, max_exercises_per_day: parseInt(e.target.value) || 10 })}
+                min={1}
+                max={50}
               />
+              <p className="text-xs text-muted-foreground">Maximum exercises users can add in a single day</p>
             </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <Label>Allow New Registrations</Label>
-                <p className="text-sm text-muted-foreground">Allow new users to sign up</p>
-              </div>
-              <Switch
-                checked={settings.allowNewRegistrations}
-                onCheckedChange={(checked) => setSettings(s => ({ ...s, allowNewRegistrations: checked }))}
+
+            <div className="grid gap-2">
+              <Label htmlFor="max-users">Max Users</Label>
+              <Input
+                id="max-users"
+                type="number"
+                value={settings.max_users}
+                onChange={(e) => setSettings({ ...settings, max_users: parseInt(e.target.value) || 1000 })}
+                min={1}
               />
+              <p className="text-xs text-muted-foreground">Maximum number of users allowed on the platform</p>
             </div>
           </CardContent>
         </Card>
@@ -74,50 +146,21 @@ export default function AdminSettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Shield className="h-5 w-5" />
-              Security
+              System Settings
             </CardTitle>
-            <CardDescription>Authentication and security options</CardDescription>
+            <CardDescription>Manage system status and maintenance</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <Label>Require Email Verification</Label>
-                <p className="text-sm text-muted-foreground">Users must verify email before access</p>
+                <Label>Maintenance Mode</Label>
+                <p className="text-sm text-muted-foreground">Disable access for non-admin users</p>
               </div>
               <Switch
-                checked={settings.requireEmailVerification}
-                onCheckedChange={(checked) => setSettings(s => ({ ...s, requireEmailVerification: checked }))}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label>Session Timeout (hours)</Label>
-              <Input
-                type="number"
-                value={settings.sessionTimeoutHours}
-                onChange={(e) => setSettings(s => ({ ...s, sessionTimeoutHours: parseInt(e.target.value) || 24 }))}
-                className="max-w-xs"
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Storage Settings */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Database className="h-5 w-5" />
-              Storage
-            </CardTitle>
-            <CardDescription>File upload and storage limits</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-2">
-              <Label>Max Upload Size (MB)</Label>
-              <Input
-                type="number"
-                value={settings.maxUploadSizeMB}
-                onChange={(e) => setSettings(s => ({ ...s, maxUploadSizeMB: parseInt(e.target.value) || 10 }))}
-                className="max-w-xs"
+                checked={settings.maintenance_mode}
+                onCheckedChange={(checked) =>
+                  setSettings({ ...settings, maintenance_mode: checked })
+                }
               />
             </div>
           </CardContent>
@@ -128,17 +171,41 @@ export default function AdminSettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Bell className="h-5 w-5" />
-              Notifications
+              Notification Settings
             </CardTitle>
-            <CardDescription>Email and push notification settings</CardDescription>
+            <CardDescription>Enable or disable notification services</CardDescription>
           </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">Notification settings coming soon...</p>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Email Notifications</Label>
+                <p className="text-sm text-muted-foreground">Send email updates to users</p>
+              </div>
+              <Switch
+                checked={settings.enable_email_notifications}
+                onCheckedChange={(checked) =>
+                  setSettings({ ...settings, enable_email_notifications: checked })
+                }
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Telegram Notifications</Label>
+                <p className="text-sm text-muted-foreground">Send Telegram messages to users</p>
+              </div>
+              <Switch
+                checked={settings.enable_telegram_notifications}
+                onCheckedChange={(checked) =>
+                  setSettings({ ...settings, enable_telegram_notifications: checked })
+                }
+              />
+            </div>
           </CardContent>
         </Card>
 
         <div className="flex justify-end">
-          <Button onClick={handleSave} disabled={saving}>
+          <Button onClick={handleSave} disabled={saving} size="lg">
             {saving ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />

@@ -186,7 +186,7 @@ export async function POST() {
       }
     }
 
-    console.log(`[v0] Processed ${processed} files, inserting into database...`)
+    console.log(`Processed ${processed} files, inserting into database...`)
 
     // Batch insert into database
     let inserted = 0
@@ -223,7 +223,7 @@ export async function POST() {
     })
 
   } catch (error: any) {
-    console.error('[v0] Error processing ZIP:', error)
+    console.error('Error processing ZIP:', error)
     return NextResponse.json({ error: error.message || 'Failed to process ZIP' }, { status: 500 })
   }
 }
@@ -272,7 +272,7 @@ export async function GET() {
     })
 
   } catch (error: any) {
-    console.error('[v0] Error getting stats:', error)
+    console.error('Error getting stats:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

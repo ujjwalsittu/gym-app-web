@@ -48,8 +48,6 @@ export async function POST(request: NextRequest) {
   try {
     const { zipPath = 'users/Archive.zip' } = await request.json()
 
-    console.log(`[v0] Starting Lottie ZIP processing from: ${zipPath}`)
-
     // List blobs to find the ZIP file
     const { blobs } = await list()
     const zipBlob = blobs.find(b => b.pathname === zipPath || b.pathname.endsWith('Archive.zip'))
@@ -60,8 +58,6 @@ export async function POST(request: NextRequest) {
         { status: 404 }
       )
     }
-
-    console.log(`[v0] Found ZIP file: ${zipBlob.pathname}`)
 
     // Download ZIP from blob storage
     const result = await get(zipBlob.pathname, { access: 'private' })
@@ -83,8 +79,6 @@ export async function POST(request: NextRequest) {
     const zip = new JSZip()
     await zip.loadAsync(zipBuffer)
 
-    console.log('[v0] ZIP extracted successfully')
-
     let processedCount = 0
     let skippedCount = 0
     const errors: string[] = []
@@ -100,8 +94,6 @@ export async function POST(request: NextRequest) {
       if (!filePath.endsWith('.json')) {
         continue
       }
-
-      console.log(`[v0] Processing: ${filePath}`)
 
       try {
         // Parse path: Gender/Equipment/BodyPart/filename.json
@@ -123,8 +115,6 @@ export async function POST(request: NextRequest) {
         const jsonContent = await file.async('string')
         const lottieData = JSON.parse(jsonContent)
 
-        console.log(`[v0] Inserting: ${exerciseName} | ${equipment} | ${bodyPart} | ${gender} | ${slug}`)
-
         // Insert or update in database
         await sql`
           INSERT INTO exercise_library 
@@ -141,12 +131,10 @@ export async function POST(request: NextRequest) {
         processedCount++
       } catch (error) {
         const errorMsg = `Error processing ${filePath}: ${error instanceof Error ? error.message : String(error)}`
-        console.error(`[v0] ${errorMsg}`)
+        console.error(errorMsg)
         errors.push(errorMsg)
       }
     }
-
-    console.log(`[v0] Processing complete. Processed: ${processedCount}, Skipped: ${skippedCount}, Errors: ${errors.length}`)
 
     return NextResponse.json({
       success: true,
@@ -156,7 +144,7 @@ export async function POST(request: NextRequest) {
       message: `Successfully processed ${processedCount} exercises from ZIP file`
     })
   } catch (error) {
-    console.error('[v0] Lottie ZIP processing error:', error)
+    console.error('Lottie ZIP processing error:', error)
     return NextResponse.json(
       {
         error: 'Failed to process Lottie ZIP',

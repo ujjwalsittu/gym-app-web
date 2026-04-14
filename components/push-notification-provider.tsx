@@ -17,7 +17,6 @@ export function PushNotificationProvider({
     const registerServiceWorker = async () => {
       try {
         if (!('serviceWorker' in navigator)) {
-          console.log('[v0] Service Workers not supported')
           return
         }
 
@@ -25,12 +24,10 @@ export function PushNotificationProvider({
           scope: '/',
         })
 
-        console.log('[v0] Service Worker registered:', registration)
-
         // Get VAPID key
         const vapidResponse = await fetch('/api/push/vapid-key')
         if (!vapidResponse.ok) {
-          console.error('[v0] Failed to get VAPID key')
+          console.error('Failed to get VAPID key')
           return
         }
 
@@ -41,7 +38,7 @@ export function PushNotificationProvider({
           await subscribeUserToPush(registration, vapidPublicKey)
         }
       } catch (error) {
-        console.error('[v0] Service Worker registration error:', error)
+        console.error('Service Worker registration error:', error)
       }
     }
 
@@ -60,7 +57,6 @@ async function subscribeUserToPush(
     const existingSubscription = await registration.pushManager.getSubscription()
 
     if (existingSubscription) {
-      console.log('[v0] Already subscribed to push notifications')
       return
     }
 
@@ -69,8 +65,6 @@ async function subscribeUserToPush(
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
     })
-
-    console.log('[v0] Push subscription created:', subscription)
 
     // Send subscription to server
     const response = await fetch('/api/push/subscribe', {
@@ -84,10 +78,8 @@ async function subscribeUserToPush(
     if (!response.ok) {
       throw new Error('Failed to save subscription')
     }
-
-    console.log('[v0] Subscription saved to server')
   } catch (error) {
-    console.error('[v0] Push subscription error:', error)
+    console.error('Push subscription error:', error)
   }
 }
 

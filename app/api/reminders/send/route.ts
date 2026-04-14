@@ -86,7 +86,7 @@ export async function POST(request: Request) {
 
         sentCount++
       } catch (error) {
-        console.error(`[v0] Failed to send reminder to user ${reminder.user_id}:`, error)
+        console.error(`Failed to send reminder to user ${reminder.user_id}:`, error)
         failedCount++
 
         // If subscription is invalid, mark as inactive
@@ -107,7 +107,7 @@ export async function POST(request: Request) {
       totalReminders: reminders.length,
     })
   } catch (error) {
-    console.error('[v0] Reminder send error:', error)
+    console.error('Reminder send error:', error)
     return NextResponse.json(
       { error: 'Failed to send reminders' },
       { status: 500 }
