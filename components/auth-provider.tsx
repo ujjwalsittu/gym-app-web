@@ -60,10 +60,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       setUser(data.user)
       
-      // Redirect based on admin status or onboarding
-      if (data.user.isAdmin) {
+      // Use a small delay to ensure state updates before navigation
+      await new Promise(resolve => setTimeout(resolve, 50))
+      
+      // Route based on admin status
+      if (data.user?.isAdmin) {
         router.push('/admin/dashboard')
-      } else if (data.user.onboarding_completed) {
+      } else if (data.user?.onboarding_completed) {
         router.push('/dashboard')
       } else {
         router.push('/onboarding')

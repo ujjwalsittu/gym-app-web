@@ -27,28 +27,32 @@ export default function AdminDashboard() {
   const [statsLoading, setStatsLoading] = useState(true)
 
   useEffect(() => {
-    if (!loading && !user?.isAdmin) {
-      router.push('/dashboard')
+    if (!loading && user !== undefined) {
+      if (!user || !user.isAdmin) {
+        router.push('/dashboard')
+      }
     }
   }, [user, loading, router])
 
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const res = await fetch('/api/admin/stats')
-        if (res.ok) {
-          const data = await res.json()
-          setStats(data)
+    if (user?.isAdmin && !stats) {
+      const fetchStats = async () => {
+        try {
+          const res = await fetch('/api/admin/stats')
+          if (res.ok) {
+            const data = await res.json()
+            setStats(data)
+          }
+        } catch (error) {
+          console.error('Failed to fetch stats:', error)
+        } finally {
+          setStatsLoading(false)
         }
-      } catch (error) {
-        console.error('Failed to fetch stats:', error)
-      } finally {
-        setStatsLoading(false)
       }
-    }
 
-    fetchStats()
-  }, [])
+      fetchStats()
+    }
+  }, [user?.isAdmin, stats])
 
   if (loading || statsLoading) {
     return (
