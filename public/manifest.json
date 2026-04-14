@@ -2,7 +2,7 @@
   "name": "hell.fitness",
   "short_name": "hell",
   "description": "Your AI Personal Trainer - Custom workout plans, diet recommendations, and progress tracking",
-  "start_url": "/dashboard",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#0f0f14",
   "theme_color": "#ff6b35",
