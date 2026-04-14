@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getSession } from '@/lib/auth'
+import { isUserAdmin } from '@/lib/admin'
 
 export async function GET() {
   try {
@@ -8,13 +9,17 @@ export async function GET() {
     if (!sessionData) {
       return NextResponse.json({ user: null })
     }
+
+    // Check if user is admin
+    const isAdmin = await isUserAdmin(sessionData.user.id)
     
     return NextResponse.json({
       user: {
         id: sessionData.user.id,
         email: sessionData.user.email,
         name: sessionData.user.name,
-        onboarding_completed: sessionData.user.onboarding_completed
+        onboarding_completed: sessionData.user.onboarding_completed,
+        isAdmin
       }
     })
   } catch (error) {
