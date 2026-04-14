@@ -22,50 +22,67 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50')
     const offset = parseInt(searchParams.get('offset') || '0')
 
-    let query = `
-      SELECT 
-        id,
-        name,
-        category,
-        equipment,
-        gender,
-        difficulty,
-        is_active,
-        CASE WHEN lottie_data IS NOT NULL THEN true ELSE false END as has_animation
-      FROM exercise_library
-      WHERE 1=1
-    `
+    // Use template literal SQL with proper filtering
+    let exercises
+    let countResult
 
-    const params: any[] = []
-
-    if (search) {
-      query += ` AND LOWER(name) LIKE LOWER($${params.length + 1})`
-      params.push(`%${search}%`)
+    if (search && category) {
+      const searchPattern = `%${search.toLowerCase()}%`
+      exercises = await sql`
+        SELECT id, name, category, equipment, gender, difficulty, is_active,
+               CASE WHEN lottie_data IS NOT NULL THEN true ELSE false END as has_animation
+        FROM exercise_library
+        WHERE LOWER(name) LIKE ${searchPattern}
+          AND LOWER(category) = ${category.toLowerCase()}
+        ORDER BY category, name ASC
+        LIMIT ${limit} OFFSET ${offset}
+      `
+      countResult = await sql`
+        SELECT COUNT(*) as total FROM exercise_library
+        WHERE LOWER(name) LIKE ${searchPattern}
+          AND LOWER(category) = ${category.toLowerCase()}
+      `
+    } else if (search) {
+      const searchPattern = `%${search.toLowerCase()}%`
+      exercises = await sql`
+        SELECT id, name, category, equipment, gender, difficulty, is_active,
+               CASE WHEN lottie_data IS NOT NULL THEN true ELSE false END as has_animation
+        FROM exercise_library
+        WHERE LOWER(name) LIKE ${searchPattern}
+        ORDER BY category, name ASC
+        LIMIT ${limit} OFFSET ${offset}
+      `
+      countResult = await sql`
+        SELECT COUNT(*) as total FROM exercise_library
+        WHERE LOWER(name) LIKE ${searchPattern}
+      `
+    } else if (category) {
+      exercises = await sql`
+        SELECT id, name, category, equipment, gender, difficulty, is_active,
+               CASE WHEN lottie_data IS NOT NULL THEN true ELSE false END as has_animation
+        FROM exercise_library
+        WHERE LOWER(category) = ${category.toLowerCase()}
+        ORDER BY category, name ASC
+        LIMIT ${limit} OFFSET ${offset}
+      `
+      countResult = await sql`
+        SELECT COUNT(*) as total FROM exercise_library
+        WHERE LOWER(category) = ${category.toLowerCase()}
+      `
+    } else {
+      exercises = await sql`
+        SELECT id, name, category, equipment, gender, difficulty, is_active,
+               CASE WHEN lottie_data IS NOT NULL THEN true ELSE false END as has_animation
+        FROM exercise_library
+        ORDER BY category, name ASC
+        LIMIT ${limit} OFFSET ${offset}
+      `
+      countResult = await sql`SELECT COUNT(*) as total FROM exercise_library`
     }
-
-    if (category) {
-      query += ` AND LOWER(category) = LOWER($${params.length + 1})`
-      params.push(category)
-    }
-
-    query += ` ORDER BY category, name ASC LIMIT ${limit} OFFSET ${offset}`
-
-    const exercises = await sql(query, params)
-
-    // Get total count
-    let countQuery = 'SELECT COUNT(*) as total FROM exercise_library WHERE 1=1'
-    if (search) {
-      countQuery += ` AND LOWER(name) LIKE LOWER($1)`
-    }
-    if (category) {
-      countQuery += ` AND LOWER(category) = LOWER($${search ? 2 : 1})`
-    }
-
-    const countResult = await sql(countQuery, search && category ? [search, category] : search ? [search] : category ? [category] : [])
 
     return NextResponse.json({
       exercises,
-      total: parseInt(countResult[0].total) || 0,
+      total: parseInt(countResult[0]?.total) || 0,
       limit,
       offset
     })

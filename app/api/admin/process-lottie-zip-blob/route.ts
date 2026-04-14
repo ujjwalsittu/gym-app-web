@@ -26,13 +26,22 @@ const genderMapping: Record<string, string> = {
   'UNISEX': 'unisex',
 }
 
-async function normalizeExerciseName(name: string): Promise<string> {
+function normalizeExerciseName(name: string): string {
   // Remove file extension
   const withoutExt = name.replace(/\.(json|lottie)$/i, '')
   // Replace underscores and hyphens with spaces
   const withSpaces = withoutExt.replace(/[_-]/g, ' ')
   // Convert to lowercase and trim
   return withSpaces.toLowerCase().trim()
+}
+
+function generateSlug(name: string, equipment: string, gender: string): string {
+  // Create a URL-friendly slug from name, equipment, and gender
+  const combined = `${name}-${equipment}-${gender}`
+  return combined
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
 }
 
 export async function POST(request: NextRequest) {
@@ -107,23 +116,25 @@ export async function POST(request: NextRequest) {
         
         const gender = genderMapping[genderRaw.toUpperCase()] || genderRaw.toLowerCase()
         const bodyPart = bodyPartMapping[bodyPartRaw.toUpperCase()] || bodyPartRaw.toLowerCase()
-        const exerciseName = await normalizeExerciseName(filenameWithExt)
+        const exerciseName = normalizeExerciseName(filenameWithExt)
+        const slug = generateSlug(exerciseName, equipment, gender)
 
         // Read JSON content
         const jsonContent = await file.async('string')
         const lottieData = JSON.parse(jsonContent)
 
-        console.log(`[v0] Inserting: ${exerciseName} | ${equipment} | ${bodyPart} | ${gender}`)
+        console.log(`[v0] Inserting: ${exerciseName} | ${equipment} | ${bodyPart} | ${gender} | ${slug}`)
 
         // Insert or update in database
         await sql`
           INSERT INTO exercise_library 
-            (name, equipment, category, gender, lottie_data, difficulty, is_active, created_at, updated_at)
+            (name, slug, equipment, category, gender, lottie_data, difficulty, is_active, created_at, updated_at)
           VALUES 
-            (${exerciseName}, ${equipment}, ${bodyPart}, ${gender}, ${JSON.stringify(lottieData)}, 'intermediate', true, NOW(), NOW())
+            (${exerciseName}, ${slug}, ${equipment}, ${bodyPart}, ${gender}, ${JSON.stringify(lottieData)}, 'intermediate', true, NOW(), NOW())
           ON CONFLICT (name, equipment, gender) 
           DO UPDATE SET 
             lottie_data = ${JSON.stringify(lottieData)},
+            slug = ${slug},
             updated_at = NOW()
         `
 
