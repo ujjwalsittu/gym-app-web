@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { PushNotificationProvider } from '@/components/push-notification-provider'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] });
@@ -47,7 +48,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="font-sans antialiased">
-        {children}
+        <PushNotificationProvider>
+          {children}
+        </PushNotificationProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
