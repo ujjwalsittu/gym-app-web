@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic'
 
 import { AuthProvider } from '@/components/auth-provider'
+import { PushNotificationProvider } from '@/components/push-notification-provider'
 
 export default function AppLayout({
   children,
@@ -9,7 +10,9 @@ export default function AppLayout({
 }) {
   return (
     <AuthProvider>
-      {children}
+      <PushNotificationProvider>
+        {children}
+      </PushNotificationProvider>
     </AuthProvider>
   )
 }

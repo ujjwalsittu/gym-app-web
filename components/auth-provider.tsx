@@ -29,9 +29,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshSession = async () => {
     try {
-      const res = await fetch('/api/auth/session')
+      const res = await fetch('/api/auth/session', { cache: 'no-store' })
       const data = await res.json()
-      setUser(data.user)
+      setUser(data.user ?? null)
     } catch (error) {
       console.error('Failed to refresh session:', error)
       setUser(null)
@@ -42,6 +42,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     refreshSession()
+
+    // Re-check session when tab regains focus (PWA background → foreground)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshSession()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
   }, [])
 
   const login = async (email: string, password: string) => {
